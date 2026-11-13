@@ -137,3 +137,38 @@ test('keyboard: Page Down moves to the next page', async ({ page }) => {
   await page.keyboard.press('PageDown');
   await expect(page.locator('#pageIndicator')).toContainText('2 / 3');
 });
+
+test('images can be discarded, removed, undone and applied to every page', async ({ page }) => {
+  const png = path.join(tmp, 'dot.png');
+  fs.writeFileSync(png, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==', 'base64'));
+  await openTool(page, 'image');
+  await page.setInputFiles('#pdfImageFileInput', await makePdf('multi', 3));
+  await page.waitForTimeout(1200);
+
+  // Delete key discards the pending image
+  await page.setInputFiles('#overlayImageInput', png);
+  await expect(page.locator('.img-box')).toHaveCount(1);
+  await page.keyboard.press('Delete');
+  await expect(page.locator('.img-box')).toHaveCount(0);
+  await expect(page.locator('#addImageBtn')).toBeDisabled();
+
+  // The cross button discards it too
+  await page.setInputFiles('#overlayImageInput', png);
+  await page.click('.img-box-x');
+  await expect(page.locator('.img-box')).toHaveCount(0);
+
+  // Place on every page, then remove one from the list
+  await page.setInputFiles('#overlayImageInput', png);
+  await page.check('#imgAllPages');
+  await page.click('#addImageBtn');
+  await expect(page.locator('#imgList .rdbox-item')).toHaveCount(3);
+  await page.locator('#imgList .rdbox-item button').first().click();
+  await expect(page.locator('#imgList .rdbox-item')).toHaveCount(2);
+
+  // Undo removes the latest, Remove all clears the rest
+  await page.click('#imgUndoBtn');
+  await expect(page.locator('#imgList .rdbox-item')).toHaveCount(1);
+  await page.click('#imgClearBtn');
+  await expect(page.locator('#imgList .rdbox-item')).toHaveCount(0);
+  await expect(page.locator('#imgUndoBtn')).toBeDisabled();
+});

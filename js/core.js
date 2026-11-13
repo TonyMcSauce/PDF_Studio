@@ -342,7 +342,7 @@ function drawOverlaysOnCanvas(canvas, overlays, vp) {
       layoutText(o, str => ctx.measureText(str).width / sc)
         .forEach(l => ctx.fillText(l.str, l.x * sc, l.y * sc));
     } else if (o.type === 'image' || o.type === 'signature') {
-      if (o.imgEl) ctx.drawImage(o.imgEl, o.x*sc, o.y*sc, o.w*sc, o.h*sc);
+      if (o.imgEl) { ctx.globalAlpha = o.opacity ?? 1; ctx.drawImage(o.imgEl, o.x*sc, o.y*sc, o.w*sc, o.h*sc); }
     } else if (o.type === 'watermark') {
       const cW = canvas.width, cH = canvas.height;
       // Use fractional position if set, else default to centre

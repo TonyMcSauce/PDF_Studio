@@ -93,6 +93,7 @@ Drawing, redacting, signing, dragging watermarks and moving text boxes use Point
 | Page Up / Page Down | Previous / next page |
 | + / - | Zoom in / out |
 | Arrow keys (image selected) | Nudge the image. Add Shift to resize |
+| Delete (image selected) | Discard the image before placing it |
 
 ## Tests
 

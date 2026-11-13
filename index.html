@@ -564,7 +564,22 @@
           <input type="file" id="overlayImageInput" accept="image/png,image/jpeg" class="input file-input"/>
         </div>
         <p class="panel-desc" id="imgPageHint">The image goes on the page shown in the preview.</p>
-        <button id="addImageBtn" class="btn-action" disabled><i class="fa-solid fa-plus"></i> Embed Image</button>
+        <div class="form-group">
+          <label for="imgOpacity">Opacity: <span id="imgOpacityVal">100%</span></label>
+          <input type="range" id="imgOpacity" min="10" max="100" value="100" class="range-input full"/>
+        </div>
+        <div class="annotate-actions">
+          <button id="imgRotateBtn" class="btn-secondary" disabled><i class="fa-solid fa-rotate-right"></i> Rotate</button>
+          <button id="imgDeleteBtn" class="btn-secondary" disabled><i class="fa-solid fa-xmark"></i> Discard</button>
+        </div>
+        <label class="check-row"><input type="checkbox" id="imgAllPages"/> Add to every page</label>
+        <button id="addImageBtn" class="btn-action" disabled><i class="fa-solid fa-plus"></i> Place Image</button>
+        <h3 class="subhead">Placed images</h3>
+        <div id="imgList" class="rdbox-list"></div>
+        <div class="annotate-actions">
+          <button id="imgUndoBtn"  class="btn-secondary" disabled><i class="fa-solid fa-rotate-left"></i> Undo</button>
+          <button id="imgClearBtn" class="btn-secondary" disabled><i class="fa-solid fa-trash"></i> Remove all</button>
+        </div>
       </div>
     </div>
 

@@ -862,3 +862,12 @@ body:has(#editorScreen:not(.hidden)) .toast { bottom: 92px }
 @media (max-width: 380px) {
   .tools-grid { grid-template-columns: 1fr }
 }
+
+/* ── Add Image: extra controls ── */
+.check-row { display: flex; align-items: center; gap: .55rem; font-size: .86rem; color: var(--text); cursor: pointer; margin: .2rem 0 .8rem }
+.check-row input { accent-color: var(--accent); width: 1rem; height: 1rem }
+.subhead { font-family: var(--mono, 'IBM Plex Mono', monospace); font-size: .68rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 1.2rem 0 .5rem }
+.rdbox-list:empty::before { content: attr(data-empty); display: block; font-size: .82rem; color: var(--dim); padding: .2rem 0 .6rem }
+.img-box-x { position: absolute; top: -11px; right: -11px; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--accent); background: var(--surface, #fff); color: var(--accent); font-size: .8rem; line-height: 1; cursor: pointer; display: grid; place-items: center; z-index: 5; box-shadow: var(--shadow-sm) }
+.img-box-x:hover { background: var(--accent); color: #fff }
+@media (pointer: coarse) { .img-box-x { width: 32px; height: 32px; top: -14px; right: -14px } }
