@@ -396,20 +396,3 @@ $('addTextBtn').addEventListener('click', async () => {
     loading(false);
   }
 });
-
-/* ── IMAGE OVERLAY ── */
-$('addImageBtn').addEventListener('click',async()=>{
-  const pages=S.toolPages['image']; if(!pages?.length)return;
-  const fi=$('overlayImageInput'); if(!fi.files[0]){toast('Select an image.','error');return;}
-  const pgNum=parseInt($('imgPage').value,10);
-  if(pgNum<1||pgNum>pages.length){toast(`Page must be 1–${pages.length}.`,'error');return;}
-  loading(true,'Loading image…');
-  try{
-    const imgEl=await loadImgEl(fi.files[0]);
-    pages[pgNum-1].overlays.push({type:'image',imgEl,
-      x:parseFloat($('imgX').value)||0,y:parseFloat($('imgY').value)||0,
-      w:parseFloat($('imgW').value)||150,h:parseFloat($('imgH').value)||100});
-    await previewMain(pgNum); setPlaceMode(null); toast('Image added!','success');
-  }catch(e){toast(`Image error: ${e.message}`,'error');}
-  finally{loading(false);}
-});
