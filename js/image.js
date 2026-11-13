@@ -4,7 +4,9 @@
 
 const IM = {
   active: false,
-  imgEl:  null,
+  imgEl:  null,   // what gets placed (already rotated)
+  srcEl:  null,   // the original picture
+  rot:    0,
   boxEl:  null,
   // box geometry as fractions of the page preview, so zoom and page changes keep it in place
   fx: 0.1, fy: 0.1, fw: 0.3, fh: 0.15,
@@ -60,7 +62,7 @@ function imShowBox() {
   box.className = 'sig-box img-box';
   box.tabIndex = 0;
   box.setAttribute('role', 'img');
-  box.setAttribute('aria-label', 'Image to place. Drag to move, use arrow keys to nudge, Shift plus arrows to resize.');
+  box.setAttribute('aria-label', 'Image to place. Drag to move, arrow keys nudge, Shift plus arrows resize, Delete discards.');
   const img = document.createElement('img');
   img.src = IM.imgEl.src; img.alt = '';
   img.draggable = false;
@@ -68,10 +70,17 @@ function imShowBox() {
   const handle = document.createElement('div');
   handle.className = 'sig-resize';
   box.appendChild(handle);
+  const xBtn = document.createElement('button');
+  xBtn.className = 'img-box-x'; xBtn.type = 'button'; xBtn.innerHTML = '&times;';
+  xBtn.setAttribute('aria-label', 'Discard this image');
+  xBtn.addEventListener('pointerdown', e => e.stopPropagation());
+  xBtn.addEventListener('click', e => { e.stopPropagation(); imDiscard(); });
+  box.appendChild(xBtn);
 
   let mode = null, sx, sy, sl, st, sw, sh;
   box.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.target === xBtn) return;
     mode = e.target === handle ? 'resize' : 'move';
     sx = e.clientX; sy = e.clientY;
     sl = parseFloat(box.style.left) || 0; st = parseFloat(box.style.top) || 0;
@@ -101,6 +110,7 @@ function imShowBox() {
   box.addEventListener('keydown', e => {
     const step = (e.shiftKey ? 0.02 : 0.01);
     const k = e.key;
+    if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); imDiscard(); return; }
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(k)) return;
     e.preventDefault();
     const dx = k === 'ArrowRight' ? step : k === 'ArrowLeft' ? -step : 0;
@@ -115,7 +125,7 @@ function imShowBox() {
   layer.appendChild(box);
   IM.boxEl = box;
   imApplyGeometry();
-  $('addImageBtn').disabled = false;
+  imSetButtons();
 }
 
 function imActivate() {
@@ -123,21 +133,114 @@ function imActivate() {
   imLayer().classList.add('active');
   imSync();
   if (IM.imgEl && !IM.boxEl) imShowBox();
+  imRenderList();
 }
 
 function imDeactivate() {
   IM.active = false; IM.boxEl = null;
   const l = imLayer(); if (!l) return;
   l.classList.remove('active'); l.innerHTML = '';
-  $('addImageBtn').disabled = true;
+  imSetButtons();
 }
+
+function imSetButtons() {
+  const has = !!IM.boxEl;
+  $('addImageBtn').disabled   = !has;
+  $('imgRotateBtn').disabled  = !has;
+  $('imgDeleteBtn').disabled  = !has;
+  imRenderList();
+}
+
+function imDiscard() {
+  if (IM.boxEl) IM.boxEl.remove();
+  IM.boxEl = null; IM.imgEl = null; IM.srcEl = null; IM.rot = 0;
+  $('overlayImageInput').value = '';
+  imSetButtons();
+}
+
+// Rotated copy of the picture, so the placed overlay is a plain bitmap
+function imRotated(src, deg) {
+  if (!deg) return Promise.resolve(src);
+  const swap = deg % 180 !== 0;
+  const cv = document.createElement('canvas');
+  cv.width = swap ? src.naturalHeight : src.naturalWidth;
+  cv.height = swap ? src.naturalWidth : src.naturalHeight;
+  const ctx = cv.getContext('2d');
+  ctx.translate(cv.width / 2, cv.height / 2);
+  ctx.rotate(deg * Math.PI / 180);
+  ctx.drawImage(src, -src.naturalWidth / 2, -src.naturalHeight / 2);
+  return new Promise(res => { const im = new Image(); im.onload = () => res(im); im.src = cv.toDataURL('image/png'); });
+}
+
+/* ── Placed images: list, remove one, undo, remove all ── */
+function imPlaced() {
+  const out = [];
+  (S.toolPages['image'] || []).forEach((p, pi) =>
+    p.overlays.forEach(o => { if (o.type === 'image') out.push({ page: pi + 1, o, p }); }));
+  return out;
+}
+
+function imRenderList() {
+  const list = $('imgList'); if (!list) return;
+  const items = imPlaced();
+  list.dataset.empty = 'Nothing placed yet.';
+  list.innerHTML = '';
+  items.forEach((it, n) => {
+    const row = document.createElement('div');
+    row.className = 'rdbox-item';
+    row.innerHTML = `<span>Page ${it.page} &nbsp;·&nbsp; image ${n + 1}</span>
+      <button type="button" aria-label="Remove image ${n + 1} from page ${it.page}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`;
+    row.querySelector('button').addEventListener('click', async () => {
+      it.p.overlays.splice(it.p.overlays.indexOf(it.o), 1);
+      await previewMain(S.curPage); imRenderList();
+      toast('Image removed.', 'info', 2000);
+    });
+    list.appendChild(row);
+  });
+  $('imgUndoBtn').disabled  = !items.length;
+  $('imgClearBtn').disabled = !items.length;
+}
+
+$('imgUndoBtn').addEventListener('click', async () => {
+  const last = imPlaced().pop(); if (!last) return;
+  last.p.overlays.splice(last.p.overlays.indexOf(last.o), 1);
+  await previewMain(S.curPage); imRenderList();
+});
+$('imgClearBtn').addEventListener('click', async () => {
+  const items = imPlaced(); if (!items.length) return;
+  if (!confirm(`Remove all ${items.length} placed image${items.length > 1 ? 's' : ''}?`)) return;
+  items.forEach(it => it.p.overlays.splice(it.p.overlays.indexOf(it.o), 1));
+  await previewMain(S.curPage); imRenderList();
+});
+
+$('imgOpacity').addEventListener('input', () => {
+  const v = +$('imgOpacity').value;
+  $('imgOpacityVal').textContent = v + '%';
+  if (IM.boxEl) IM.boxEl.querySelector('img').style.opacity = v / 100;
+});
+
+$('imgRotateBtn').addEventListener('click', async () => {
+  if (!IM.srcEl || !IM.boxEl) return;
+  imReadGeometry();
+  const lw = imLayer().offsetWidth, lh = imLayer().offsetHeight;
+  // swap the box's pixel width and height around its centre, then re-fit inside the page
+  const cx = (IM.fx + IM.fw / 2) * lw, cy = (IM.fy + IM.fh / 2) * lh;
+  const wpx = IM.fh * lh, hpx = IM.fw * lw;
+  IM.rot = (IM.rot + 90) % 360;
+  IM.imgEl = await imRotated(IM.srcEl, IM.rot);
+  IM.boxEl.querySelector('img').src = IM.imgEl.src;
+  IM.fw = Math.min(1, wpx / lw); IM.fh = Math.min(1, hpx / lh);
+  IM.fx = cx / lw - IM.fw / 2; IM.fy = cy / lh - IM.fh / 2;
+  imClamp(); imApplyGeometry();
+});
 
 $('overlayImageInput').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
-    IM.imgEl = await loadImgEl(f);
+    IM.srcEl = await loadImgEl(f); IM.imgEl = IM.srcEl; IM.rot = 0;
     if (!IM.active) imActivate();
     imShowBox();
+    IM.boxEl.querySelector('img').style.opacity = (+$('imgOpacity').value) / 100;
     IM.boxEl?.focus({ preventScroll: true });
   } catch (err) { toast(err.message, 'error'); }
 });
@@ -146,16 +249,21 @@ $('addImageBtn').addEventListener('click', async () => {
   const pages = S.toolPages['image']; if (!pages?.length) return;
   if (!IM.imgEl || !IM.boxEl) { toast('Choose an image first.', 'error'); return; }
   imReadGeometry(); imClamp();
+  const opacity = (+$('imgOpacity').value) / 100;
+  const targets = $('imgAllPages').checked ? pages : [pages[S.curPage - 1]];
   loading(true, 'Placing image…');
   try {
-    const page = pages[S.curPage - 1];
-    const vp = (await page.pdfJsDoc.getPage(page.pageNum)).getViewport({ scale: 1 });
-    page.overlays.push({
-      type: 'image', imgEl: IM.imgEl,
-      x: IM.fx * vp.width, y: IM.fy * vp.height, w: IM.fw * vp.width, h: IM.fh * vp.height,
-    });
+    for (const page of targets) {
+      const vp = (await page.pdfJsDoc.getPage(page.pageNum)).getViewport({ scale: 1 });
+      page.overlays.push({
+        type: 'image', imgEl: IM.imgEl, opacity,
+        x: IM.fx * vp.width, y: IM.fy * vp.height, w: IM.fw * vp.width, h: IM.fh * vp.height,
+      });
+    }
+    imDiscard();
     await previewMain(S.curPage);
-    toast(`Image placed on page ${S.curPage}. Choose another to add more.`, 'success');
+    imRenderList();
+    toast(targets.length > 1 ? `Image placed on all ${targets.length} pages.` : `Image placed on page ${S.curPage}.`, 'success');
   } catch (e) { toast(`Image error: ${e.message}`, 'error'); }
   finally { loading(false); }
 });
