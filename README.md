@@ -32,10 +32,13 @@ Files up to 100 MB are supported.
 - **Tools 01 to 12** never send your file anywhere. Once the page has loaded, they also work offline thanks to a service worker.
 - **Tools 13 to 16** send the file to the companion server ([pdf-studio-server](https://github.com/TonyMcSauce/pdf-studio-server)) over HTTPS. It is processed in memory and deleted once the result is returned. For Protect, the password is sent along with the file.
 - No analytics, no ads and no cookies. Only your theme choice is saved, in local storage.
+- Every library and font is bundled in `vendor/`, so the page makes no requests to third parties. A Content Security Policy enforces that, and only allows connections to the page itself and the companion server.
 
 ## How output quality is preserved
 
-Pages are copied into the new file as real PDF objects with [pdf-lib](https://pdf-lib.js.org/), so text stays selectable and searchable, and links, fonts and vector graphics come through untouched. Rotation is saved as page metadata, which loses nothing. Anything you add (text, images, signatures, watermarks, page numbers, annotations) is drawn on a transparent layer at 3× resolution and stamped on top.
+Pages are copied into the new file as real PDF objects with [pdf-lib](https://pdf-lib.js.org/), so text stays selectable and searchable, and links, fonts and vector graphics come through untouched. Rotation is saved as page metadata, which loses nothing. Text you add (Add Text, page numbers, text watermarks) is written as real, selectable text using the standard PDF fonts. Characters those fonts cannot encode fall back to an image. Images, signatures, annotations and image watermarks are drawn on a transparent layer at 3× resolution and stamped on top.
+
+Compress never makes a file bigger: if the result would not be smaller, nothing is downloaded and your original stands.
 
 A page is flattened to an image in only two cases:
 
@@ -57,6 +60,8 @@ js/redact.js          Redact
 js/signature.js       Sign
 js/server.js          Protect and Office conversions (server-backed)
 js/init.js            Main download button, start-up, service worker
+js/theme-init.js      Sets the theme before first paint
+vendor/               Bundled libraries and fonts
 sw.js                 Offline cache
 manifest.webmanifest  Install as an app (PWA)
 favicon.svg, icon-*.png, og-image.png
@@ -72,7 +77,13 @@ Each tool lives in its own file and shares the globals set up in `core.js`. If o
 | [pdf-lib 1.17](https://pdf-lib.js.org/) | Build, copy and edit PDFs |
 | [SortableJS 1.15](https://sortablejs.github.io/Sortable/) | Drag-to-reorder |
 | [Font Awesome 6 (free)](https://fontawesome.com/) | Icons |
-| Instrument Serif, Bricolage Grotesque, IBM Plex Mono | Typefaces (Google Fonts) |
+| Instrument Serif, Bricolage Grotesque, IBM Plex Mono | Typefaces |
+
+All of these are served from `vendor/` (licences in `vendor/LICENSES.md`).
+
+## Touch and pen
+
+Drawing, redacting, signing, dragging watermarks and moving text boxes use Pointer Events, so a mouse, a pen and a finger all work the same way.
 
 ## Deploy on GitHub Pages
 

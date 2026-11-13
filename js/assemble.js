@@ -102,7 +102,16 @@ document.querySelectorAll('.compress-opt').forEach(opt => {
 $('compressBtn').addEventListener('click', async () => {
   const pages = S.toolPages['compress']; if (!pages?.length) return;
   loading(true,'Compressing…');
-  try { dlBytes(await buildPdf(pages, S.compressQuality, { rasterize: true }), 'compressed.pdf'); toast('Compressed PDF downloaded!','success'); }
+  try {
+    const out = await buildPdf(pages, S.compressQuality, { rasterize: true });
+    const orig = S.compressOrigSize || 0;
+    if (orig && out.byteLength >= orig) {
+      toast('This PDF is already compact, so compressing would make it larger. Your original is unchanged.', 'info');
+    } else {
+      dlBytes(out, 'compressed.pdf');
+      toast(orig ? `Compressed: ${fmtSize(orig)} to ${fmtSize(out.byteLength)}` : 'Compressed PDF downloaded!', 'success');
+    }
+  }
   catch(e){ console.error(e); toast(`Compress failed: ${e.message}`,'error'); }
   finally { loading(false); }
 });

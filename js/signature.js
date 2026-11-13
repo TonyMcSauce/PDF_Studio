@@ -14,7 +14,7 @@ $('clearSig').addEventListener('click', () => {
   $('addSigBtn').disabled = true;
 });
 function sigPos(e) {
-  const r = sigCv.getBoundingClientRect(), s = e.touches ? e.touches[0] : e;
+  const r = sigCv.getBoundingClientRect(), s = e;
   return { x: (s.clientX-r.left)*(sigCv.width/r.width), y: (s.clientY-r.top)*(sigCv.height/r.height) };
 }
 function sigDraw(e) {
@@ -34,13 +34,17 @@ function sigDraw(e) {
     }
   }
 }
-sigCv.addEventListener('mousedown', e => { e.preventDefault(); S.sigDrawing=true; const p=sigPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
-sigCv.addEventListener('mousemove', e => sigDraw(e));
-sigCv.addEventListener('mouseup',   () => { S.sigDrawing=false; sigCheckDrawn(); });
-sigCv.addEventListener('mouseleave',() => { S.sigDrawing=false; });
-sigCv.addEventListener('touchstart', e => { e.preventDefault(); S.sigDrawing=true; const p=sigPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }, {passive:false});
-sigCv.addEventListener('touchmove',  e => sigDraw(e), {passive:false});
-sigCv.addEventListener('touchend',   () => { S.sigDrawing=false; sigCheckDrawn(); });
+/* Pointer events: one path for mouse, pen and finger */
+sigCv.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  e.preventDefault();
+  try { sigCv.setPointerCapture(e.pointerId); } catch (_) {}
+  S.sigDrawing = true; const p = sigPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y);
+});
+sigCv.addEventListener('pointermove', e => sigDraw(e));
+const sigEnd = () => { if (!S.sigDrawing) return; S.sigDrawing = false; sigCheckDrawn(); };
+sigCv.addEventListener('pointerup', sigEnd);
+sigCv.addEventListener('pointercancel', sigEnd);
 
 // State
 const SIG = { boxEl: null, active: false };
@@ -106,7 +110,8 @@ function sigShowBox(clickX, clickY) {
   box.style.height = defH + 'px';
 
   let dragMode = null, startX, startY, startL, startT, startW, startH;
-  box.addEventListener('mousedown', e => {
+  box.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (e.target === resH) dragMode = 'resize';
     else dragMode = 'move';
     startX = e.clientX; startY = e.clientY;
@@ -114,7 +119,7 @@ function sigShowBox(clickX, clickY) {
     startW = box.offsetWidth; startH = box.offsetHeight;
     e.preventDefault(); e.stopPropagation();
   });
-  document.addEventListener('mousemove', e => {
+  document.addEventListener('pointermove', e => {
     if (!dragMode) return;
     const dx = e.clientX - startX, dy = e.clientY - startY;
     if (dragMode === 'move') {
@@ -125,7 +130,8 @@ function sigShowBox(clickX, clickY) {
       box.style.height = Math.max(30, startH + dy) + 'px';
     }
   });
-  document.addEventListener('mouseup', () => { dragMode = null; });
+  document.addEventListener('pointerup', () => { dragMode = null; });
+  document.addEventListener('pointercancel', () => { dragMode = null; });
 
   layer.appendChild(box);
   SIG.boxEl = box;

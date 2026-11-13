@@ -13,7 +13,7 @@
 const CFG = {
   SERVER_URL: 'https://pdf-studio-server-1.onrender.com',
   MAX_MB: 100,
-  WORKER: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  WORKER: 'vendor/pdfjs/pdf.worker.min.js',
   RENDER_SCALE: 2.0,
   OVERLAY_SCALE: 3.0,
   PREVIEW_SCALE: 1.4,
@@ -234,6 +234,7 @@ function wirePdfUpload({ toolName, inputId, zoneId, infoId, controlsId }) {
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const doc   = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+      if (toolName === 'compress') S.compressOrigSize = file.size;
       S.toolPages[toolName] = Array.from({ length: doc.numPages }, (_, i) => ({
         pdfJsDoc: doc, pageNum: i + 1, rotation: 0, overlays: [],
       }));
@@ -332,12 +333,11 @@ function drawOverlaysOnCanvas(canvas, overlays, vp) {
   overlays.forEach(o => {
     ctx.save();
     if (o.type === 'text') {
-      const weight = o.bold   ? 'bold '   : '';
-      const style2 = o.italic ? 'italic ' : '';
-      const face   = o.font   || 'Arial';
-      ctx.font      = `${style2}${weight}${o.size * sc}px ${face}`;
+      ctx.font      = canvasFont(o, sc);
       ctx.fillStyle = o.color || '#000';
-      ctx.fillText(o.text, o.x * sc, o.y * sc + o.size * sc);
+      ctx.textAlign = 'left';
+      layoutText(o, str => ctx.measureText(str).width / sc)
+        .forEach(l => ctx.fillText(l.str, l.x * sc, l.y * sc));
     } else if (o.type === 'image' || o.type === 'signature') {
       if (o.imgEl) ctx.drawImage(o.imgEl, o.x*sc, o.y*sc, o.w*sc, o.h*sc);
     } else if (o.type === 'watermark') {
@@ -538,13 +538,119 @@ function libDocFor(pdfJsDoc) {
 }
 const liveOverlays = d => (d.overlays || []).filter(o => o.type !== 'pagenumber_preview');
 
-async function renderOverlayLayer(desc, scale) {
+
+// ── Text layout shared by the canvas preview and the vector PDF path ──
+function canvasFont(o, sc) {
+  return `${o.italic ? 'italic ' : ''}${o.bold ? 'bold ' : ''}${o.size * sc}px ${o.font || 'Arial'}`;
+}
+
+function wrapText(text, maxW, measure) {
+  const out = [];
+  String(text).replace(/\t/g, '    ').split('\n').forEach(par => {
+    if (!isFinite(maxW)) { out.push(par); return; }
+    let line = '';
+    par.split(/(\s+)/).forEach(tok => {
+      if (tok === '') return;
+      if (measure(line + tok) <= maxW || line === '') {
+        line += tok;
+      } else { out.push(line.trimEnd()); line = tok.trimStart(); }
+      while (measure(line) > maxW && line.length > 1) {       // break very long words
+        let n = line.length - 1;
+        while (n > 1 && measure(line.slice(0, n)) > maxW) n--;
+        out.push(line.slice(0, n)); line = line.slice(n);
+      }
+    });
+    out.push(line.trimEnd());
+  });
+  return out;
+}
+
+// Returns [{str, x, y}] in unscaled view units; y is the baseline.
+function layoutText(o, measure) {
+  const lh   = o.size * (o.lineHeight || 1.4);
+  const padX = o.padX || 0, padY = o.padY || 0;
+  const maxW = o.w ? Math.max(o.size, o.w - 2 * padX) : Infinity;
+  const lead = (lh - 1.117 * o.size) / 2 + 0.905 * o.size;    // CSS half-leading + ascent
+  return wrapText(o.text, maxW, measure).map((str, i) =>
+    ({ str, x: o.x + padX, y: o.y + padY + i * lh + lead }));
+}
+
+// ── Vector (selectable, searchable) text via the standard PDF fonts ──
+function stdFontName(face, bold, italic) {
+  const f = String(face || '').toLowerCase();
+  if (f.includes('impact')) bold = true;
+  const fam = /times|georgia|serif/.test(f) && !/sans/.test(f) ? 'Times'
+            : /courier|mono/.test(f) ? 'Courier' : 'Helvetica';
+  if (fam === 'Times')   return bold ? (italic ? 'TimesRomanBoldItalic' : 'TimesRomanBold') : (italic ? 'TimesRomanItalic' : 'TimesRoman');
+  if (fam === 'Courier') return 'Courier' + (bold ? 'Bold' : '') + (italic ? 'Oblique' : '');
+  return 'Helvetica' + (bold ? 'Bold' : '') + (italic ? 'Oblique' : '');
+}
+
+function hexToRgb(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '') || /^#?([0-9a-f]{6})$/i.exec('000000');
+  const n = parseInt(m[1], 16);
+  return PDFLib.rgb((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255);
+}
+
+// Draws what it can as real text. Returns the overlays it could not (left for the raster layer).
+async function drawVectorOverlays(doc, page, overlays, total, fonts) {
+  const { StandardFonts, degrees } = PDFLib;
+  const box = page.getCropBox();
+  const sideways = total % 180 !== 0;
+  const Wv = sideways ? box.height : box.width, Hv = sideways ? box.width : box.height;
+  // view (top-left origin, y down, after rotation) -> page user space
+  const map = {
+    0:   (x, y) => [box.x + x,              box.y + box.height - y],
+    90:  (x, y) => [box.x + y,              box.y + x],
+    180: (x, y) => [box.x + box.width - x,  box.y + y],
+    270: (x, y) => [box.x + box.width - y,  box.y + box.height - x],
+  }[total];
+  const leftover = [];
+
+  for (const o of overlays) {
+    const isText = o.type === 'text' || o.type === 'pagenumber' || (o.type === 'watermark' && !o.imgEl);
+    if (!isText || !String(o.text || '').trim()) { leftover.push(o); continue; }
+    const name = stdFontName(o.type === 'pagenumber' ? 'Arial' : o.font, o.bold, o.italic);
+    if (!fonts.has(name)) fonts.set(name, await doc.embedFont(StandardFonts[name]));
+    const font = fonts.get(name);
+    const clean = String(o.text).replace(/\t/g, '    ');
+    try { font.encodeText(clean.replace(/\n/g, ' ')); } catch { leftover.push(o); continue; }  // needs raster fallback
+    const measure = s => font.widthOfTextAtSize(s, o.size || 12);
+    const color = hexToRgb(o.color || (o.type === 'pagenumber' ? '#333333' : '#000000'));
+
+    if (o.type === 'text') {
+      layoutText({ ...o, text: clean }, measure).forEach(l => {
+        if (!l.str) return;
+        const [px, py] = map(l.x, l.y);
+        page.drawText(l.str, { x: px, y: py, size: o.size, font, color, rotate: degrees(total) });
+      });
+    } else if (o.type === 'pagenumber') {
+      const w = measure(clean);
+      const dx = o.align === 'right' ? -w : o.align === 'left' ? 0 : -w / 2;
+      const [px, py] = map(o.x + dx, o.y);
+      page.drawText(clean, { x: px, y: py, size: o.size, font, color, rotate: degrees(total) });
+    } else {                                                        // text watermark
+      const size = o.size || 60, a = (o.angle || 0) * Math.PI / 180;
+      const cx = Wv * (o.xFrac !== undefined ? o.xFrac : 0.5);
+      const cy = Hv * (o.yFrac !== undefined ? o.yFrac : 0.5);
+      const w = font.widthOfTextAtSize(clean, size), drop = size * 0.32;   // canvas "middle" baseline
+      const vx = cx - Math.cos(a) * w / 2 - Math.sin(a) * drop;
+      const vy = cy - Math.sin(a) * w / 2 + Math.cos(a) * drop;
+      const [px, py] = map(vx, vy);
+      page.drawText(clean, { x: px, y: py, size, font, color, opacity: o.opacity ?? 0.3,
+                             rotate: degrees(total - (o.angle || 0)) });
+    }
+  }
+  return leftover;
+}
+
+async function renderOverlayLayer(desc, scale, overlays) {
   const pdfPage = await desc.pdfJsDoc.getPage(desc.pageNum);
   const rotation = (pdfPage.getViewport({ scale: 1 }).rotation + desc.rotation) % 360;
   const vp = pdfPage.getViewport({ scale, rotation });
   const cv = document.createElement('canvas');
   cv.width = Math.ceil(vp.width); cv.height = Math.ceil(vp.height);
-  drawOverlaysOnCanvas(cv, liveOverlays(desc), vp);
+  drawOverlaysOnCanvas(cv, overlays || liveOverlays(desc), vp);
   return cv;
 }
 
@@ -561,6 +667,7 @@ async function addRasterPage(doc, desc, quality) {
 async function buildPdf(pageDescs, quality = 0.92, { rasterize = false } = {}) {
   const { PDFDocument, degrees } = PDFLib;
   const doc = await PDFDocument.create();
+  const fonts = new Map();
   for (let i = 0; i < pageDescs.length; i++) {
     const d = pageDescs[i];
     loading(true, `Building PDF… ${i + 1} / ${pageDescs.length}`);
@@ -573,8 +680,9 @@ async function buildPdf(pageDescs, quality = 0.92, { rasterize = false } = {}) {
     page.setRotation(degrees(total));
     doc.addPage(page);
 
-    if (overlays.length) {
-      const layer = await renderOverlayLayer(d, CFG.OVERLAY_SCALE);
+    const rest = overlays.length ? await drawVectorOverlays(doc, page, overlays, total, fonts) : [];
+    if (rest.length) {
+      const layer = await renderOverlayLayer(d, CFG.OVERLAY_SCALE, rest);
       const png = await doc.embedPng(dataUrlToBytes(layer.toDataURL('image/png')));
       const box = page.getCropBox();
       const sideways = total % 180 !== 0;
