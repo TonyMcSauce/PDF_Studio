@@ -1,39 +1,56 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>PDF Studio - All-in-One PDF Editor</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <title>PDF Studio · Private PDF tools in your browser</title>
+  <meta name="description" content="Merge, split, compress, sign, redact, watermark and annotate PDFs right in your browser. Free, no sign-up, and your files stay on your device."/>
+  <meta name="theme-color" content="#f3ede1" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:title" content="PDF Studio · Private PDF tools in your browser"/>
+  <meta property="og:description" content="16 PDF tools that run on your own device. No uploads, no sign-up, no tracking."/>
+  <meta property="og:image" content="og-image.png"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <link rel="manifest" href="manifest.webmanifest"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Bricolage+Grotesque:opsz,wght@12..96,300..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script>
+    (function(){try{var t=localStorage.getItem('pdfstudio-theme');if(!t)t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js" defer></script>
 </head>
 <body>
 
 <!-- HEADER -->
 <header class="app-header">
   <div class="header-left">
-    <button class="logo-btn" id="goHome">
-      <i class="fa-solid fa-file-pdf"></i>
-      <span>PDF Studio</span>
+    <button class="logo-btn" id="goHome" aria-label="PDF Studio home">
+      <span class="logo-mark" aria-hidden="true"><span>P</span></span>
+      <span class="logo-word">PDF <em>Studio</em></span>
     </button>
-    <span class="tagline">100% Client-Side · No Upload · No Tracking</span>
+    <span class="tagline">Runs on your device · No sign-up · No tracking</span>
   </div>
   <div class="header-right">
     <!-- Home button always visible when in editor -->
-    <button id="homeBtn" class="home-nav-btn hidden" title="Back to Home">
-      <i class="fa-solid fa-house"></i> Home
+    <button id="homeBtn" class="home-nav-btn hidden" title="Back to all tools">
+      <i class="fa-solid fa-grip" aria-hidden="true"></i> <span>All tools</span>
     </button>
-    <button id="themeToggle" class="icon-btn"><i class="fa-solid fa-moon"></i></button>
+    <button id="themeToggle" class="icon-btn theme-toggle" aria-label="Switch theme"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
   </div>
 </header>
 
-<div id="loadingOverlay" class="loading-overlay hidden">
+<div id="loadingOverlay" class="loading-overlay hidden" role="status" aria-live="polite">
   <div class="loading-box"><div class="spinner"></div><p id="loadingText">Processing…</p></div>
 </div>
-<div id="toast" class="toast hidden"></div>
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
 <!-- Floating text toolbar (appears above selected text box) -->
 <div id="tbFloatBar" class="tb-float-bar hidden">
@@ -47,96 +64,196 @@
   <input type="number" id="tbFloatSize" class="tb-float-size" value="16" min="6" max="200" title="Font size"/>
   <input type="color"  id="tbFloatColor" class="tb-float-color" value="#000000" title="Color"/>
   <div class="tb-float-sep"></div>
-  <button id="tbFloatBold"   class="tb-float-btn" title="Bold"><b>B</b></button>
-  <button id="tbFloatItalic" class="tb-float-btn" title="Italic"><i>I</i></button>
+  <button id="tbFloatBold"   class="tb-float-btn" title="Bold" aria-label="Bold"><b>B</b></button>
+  <button id="tbFloatItalic" class="tb-float-btn" title="Italic" aria-label="Italic"><i>I</i></button>
   <div class="tb-float-sep"></div>
-  <button id="tbFloatDup"  class="tb-float-btn" title="Duplicate"><i class="fa-solid fa-copy"></i></button>
-  <button id="tbFloatDel"  class="tb-float-btn tb-float-del" title="Delete"><i class="fa-solid fa-trash"></i></button>
+  <button id="tbFloatDup"  class="tb-float-btn" title="Duplicate" aria-label="Duplicate"><i class="fa-solid fa-copy"></i></button>
+  <button id="tbFloatDel"  class="tb-float-btn tb-float-del" title="Delete" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>
 </div>
 
 <!-- ═══════════════════════════════════════════════ -->
 <!-- HOME SCREEN                                    -->
 <!-- ═══════════════════════════════════════════════ -->
 <div id="homeScreen" class="home-screen">
-  <div class="home-hero">
-    <div class="home-hero-icon"><i class="fa-solid fa-file-pdf"></i></div>
-    <h1>Every PDF tool you need</h1>
-    <p>100% free · Works in your browser · Your files never leave your device</p>
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="kicker"><span class="kicker-dot" aria-hidden="true"></span>PDF Studio · Private by design</p>
+      <h1>Every PDF job,<br/><em>done on your own desk.</em></h1>
+      <p class="hero-sub">Merge, split, sign, redact and mark up PDFs right in your browser. Your files stay on this device, with no uploads, no sign-up and nothing to install.</p>
+      <div class="hero-actions">
+        <button class="btn-hero" data-open-tool="merge">Start with Merge <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i></button>
+        <a class="btn-ghost" href="#tools">Browse all 16 tools</a>
+      </div>
+      <ul class="hero-facts">
+        <li><b>16</b><span>tools</span></li>
+        <li><b>0</b><span>sign-ups</span></li>
+        <li><b>0</b><span>trackers</span></li>
+      </ul>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="sheet sheet-3"></div>
+      <div class="sheet sheet-2"></div>
+      <div class="sheet sheet-1">
+        <span class="ln w90"></span><span class="ln w70"></span><span class="ln w80"></span>
+        <span class="ln w40 redact-bar"></span><span class="ln w85"></span><span class="ln w60 hl"></span><span class="ln w75"></span>
+        <svg class="scribble" viewBox="0 0 220 70"><path d="M8 48c18-30 30-38 36-20s-10 34 4 26 22-44 34-38-6 36 8 30 18-26 28-22 4 18 16 14 20-16 34-12 22 6 40-2"/></svg>
+        <span class="sig-line"></span>
+      </div>
+      <div class="stamp"><span>Local</span><small>No upload</small></div>
+      <span class="crop c-tl"></span><span class="crop c-tr"></span><span class="crop c-bl"></span><span class="crop c-br"></span>
+    </div>
+  </section>
+
+  <div id="tools" class="tool-sections">
+    <section class="tool-group g-assemble" aria-labelledby="grp-01">
+      <header class="group-head">
+        <span class="group-no">01</span>
+        <h2 id="grp-01">Assemble</h2>
+        <p>Put documents together, take them apart, slim them down.</p>
+      </header>
+      <div class="tools-grid">
+      <button class="tool-card" data-tool="merge" style="--i:1">
+        <span class="card-no">01</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span>
+        <span class="tool-card-text"><span class="card-title">Merge PDF</span><span class="card-desc">Combine several PDFs into one</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="split" style="--i:2">
+        <span class="card-no">02</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-scissors"></i></span>
+        <span class="tool-card-text"><span class="card-title">Split PDF</span><span class="card-desc">Pull a page range into its own file</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="compress" style="--i:3">
+        <span class="card-no">03</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-compress"></i></span>
+        <span class="tool-card-text"><span class="card-title">Compress PDF</span><span class="card-desc">Shrink file size for email and upload</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="imagestopdf" style="--i:4">
+        <span class="card-no">04</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-images"></i></span>
+        <span class="tool-card-text"><span class="card-title">Images to PDF</span><span class="card-desc">Turn JPG and PNG photos into a PDF</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="pages" style="--i:5">
+        <span class="card-no">05</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-table-cells-large"></i></span>
+        <span class="tool-card-text"><span class="card-title">Organize Pages</span><span class="card-desc">Reorder, rotate and delete pages</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      </div>
+    </section>
+    <section class="tool-group g-markup" aria-labelledby="grp-02">
+      <header class="group-head">
+        <span class="group-no">02</span>
+        <h2 id="grp-02">Mark up</h2>
+        <p>Write on the page the way you would with a pen.</p>
+      </header>
+      <div class="tools-grid">
+      <button class="tool-card" data-tool="annotate" style="--i:6">
+        <span class="card-no">06</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-pen-nib"></i></span>
+        <span class="tool-card-text"><span class="card-title">Annotate</span><span class="card-desc">Draw, highlight, add shapes and arrows</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="text" style="--i:7">
+        <span class="card-no">07</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-font"></i></span>
+        <span class="tool-card-text"><span class="card-title">Add Text</span><span class="card-desc">Type straight onto any page</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="image" style="--i:8">
+        <span class="card-no">08</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-image"></i></span>
+        <span class="tool-card-text"><span class="card-title">Add Image</span><span class="card-desc">Place a logo, stamp or photo</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="watermark" style="--i:9">
+        <span class="card-no">09</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-stamp"></i></span>
+        <span class="tool-card-text"><span class="card-title">Watermark</span><span class="card-desc">Brand or mark every page</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="pagenumbers" style="--i:10">
+        <span class="card-no">10</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-list-ol"></i></span>
+        <span class="tool-card-text"><span class="card-title">Page Numbers</span><span class="card-desc">Number pages in the style you like</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      </div>
+    </section>
+    <section class="tool-group g-seal" aria-labelledby="grp-03">
+      <header class="group-head">
+        <span class="group-no">03</span>
+        <h2 id="grp-03">Seal</h2>
+        <p>Finish, sign and lock documents before they go out.</p>
+      </header>
+      <div class="tools-grid">
+      <button class="tool-card" data-tool="redact" style="--i:11">
+        <span class="card-no">11</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-eraser"></i></span>
+        <span class="tool-card-text"><span class="card-title">Redact</span><span class="card-desc">Black out sensitive details for good</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="signature" style="--i:12">
+        <span class="card-no">12</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-signature"></i></span>
+        <span class="tool-card-text"><span class="card-title">Sign PDF</span><span class="card-desc">Draw your signature and place it</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card tool-card-server" data-tool="security" style="--i:13">
+        <span class="card-no">13</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></span>
+        <span class="tool-card-text"><span class="card-title">Protect PDF<span class="server-badge">Server</span></span><span class="card-desc">Add a password with AES-256</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      </div>
+    </section>
+    <section class="tool-group g-convert" aria-labelledby="grp-04">
+      <header class="group-head">
+        <span class="group-no">04</span>
+        <h2 id="grp-04">Convert</h2>
+        <p>Turn a PDF into an editable Office file.</p>
+      </header>
+      <div class="tools-grid">
+      <button class="tool-card tool-card-server" data-tool="pdftoword" style="--i:14">
+        <span class="card-no">14</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-file-word"></i></span>
+        <span class="tool-card-text"><span class="card-title">PDF to Word<span class="server-badge">Server</span></span><span class="card-desc">Editable DOCX document</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card tool-card-server" data-tool="pdftoexcel" style="--i:15">
+        <span class="card-no">15</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-file-excel"></i></span>
+        <span class="tool-card-text"><span class="card-title">PDF to Excel<span class="server-badge">Server</span></span><span class="card-desc">Tables into an XLSX sheet</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card tool-card-server" data-tool="pdftopptx" style="--i:16">
+        <span class="card-no">16</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-file-powerpoint"></i></span>
+        <span class="tool-card-text"><span class="card-title">PDF to PowerPoint<span class="server-badge">Server</span></span><span class="card-desc">Pages into PPTX slides</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      </div>
+    </section>
   </div>
 
-  <div class="tools-grid">
-    <div class="tool-card" data-tool="merge">
-      <div class="tool-card-icon" style="--c:#4f8ef7"><i class="fa-solid fa-layer-group"></i></div>
-      <div class="tool-card-text"><h3>Merge PDF</h3><p>Combine multiple PDFs into one document</p></div>
+  <section class="privacy-strip" aria-label="Where your files go">
+    <div class="privacy-col">
+      <span class="privacy-icon" aria-hidden="true"><i class="fa-solid fa-laptop"></i></span>
+      <div><h3>Stays on your device</h3><p>Tools 01 to 12 run entirely in your browser. Your PDF is never sent anywhere, and it still works offline once the page has loaded.</p></div>
     </div>
-    <div class="tool-card" data-tool="split">
-      <div class="tool-card-icon" style="--c:#a78bfa"><i class="fa-solid fa-scissors"></i></div>
-      <div class="tool-card-text"><h3>Split PDF</h3><p>Extract pages into a separate file</p></div>
+    <div class="privacy-col">
+      <span class="privacy-icon is-server" aria-hidden="true"><i class="fa-solid fa-server"></i></span>
+      <div><h3>Uses our conversion server</h3><p>Protect, Word, Excel and PowerPoint need a server. The file travels over HTTPS, is processed in memory and is deleted as soon as you get it back.</p></div>
     </div>
-    <div class="tool-card" data-tool="compress">
-      <div class="tool-card-icon" style="--c:#34d399"><i class="fa-solid fa-compress-arrows-alt"></i></div>
-      <div class="tool-card-text"><h3>Compress PDF</h3><p>Reduce file size while keeping quality</p></div>
-    </div>
-    <div class="tool-card" data-tool="imagestopdf">
-      <div class="tool-card-icon" style="--c:#fb923c"><i class="fa-solid fa-images"></i></div>
-      <div class="tool-card-text"><h3>Images to PDF</h3><p>Convert JPG/PNG images into a PDF</p></div>
-    </div>
-    <div class="tool-card" data-tool="pages">
-      <div class="tool-card-icon" style="--c:#4f8ef7"><i class="fa-solid fa-th-large"></i></div>
-      <div class="tool-card-text"><h3>Organize Pages</h3><p>Reorder, rotate and delete pages</p></div>
-    </div>
-    <div class="tool-card" data-tool="annotate">
-      <div class="tool-card-icon" style="--c:#f472b6"><i class="fa-solid fa-pen-nib"></i></div>
-      <div class="tool-card-text"><h3>Annotate PDF</h3><p>Draw, highlight, shapes and arrows</p></div>
-    </div>
-    <div class="tool-card" data-tool="text">
-      <div class="tool-card-icon" style="--c:#38bdf8"><i class="fa-solid fa-font"></i></div>
-      <div class="tool-card-text"><h3>Add Text</h3><p>Overlay custom text onto pages</p></div>
-    </div>
-    <div class="tool-card" data-tool="image">
-      <div class="tool-card-icon" style="--c:#fb923c"><i class="fa-solid fa-image"></i></div>
-      <div class="tool-card-text"><h3>Add Image</h3><p>Embed images onto PDF pages</p></div>
-    </div>
-    <div class="tool-card" data-tool="watermark">
-      <div class="tool-card-icon" style="--c:#a78bfa"><i class="fa-solid fa-stamp"></i></div>
-      <div class="tool-card-text"><h3>Watermark</h3><p>Add text or image watermark to pages</p></div>
-    </div>
-    <div class="tool-card" data-tool="pagenumbers">
-      <div class="tool-card-icon" style="--c:#34d399"><i class="fa-solid fa-list-ol"></i></div>
-      <div class="tool-card-text"><h3>Page Numbers</h3><p>Stamp numbers onto every page</p></div>
-    </div>
-    <div class="tool-card" data-tool="redact">
-      <div class="tool-card-icon" style="--c:#f74f6a"><i class="fa-solid fa-eraser"></i></div>
-      <div class="tool-card-text"><h3>Redact PDF</h3><p>Permanently black out sensitive content</p></div>
-    </div>
-    <div class="tool-card" data-tool="signature">
-      <div class="tool-card-icon" style="--c:#38bdf8"><i class="fa-solid fa-signature"></i></div>
-      <div class="tool-card-text"><h3>Sign PDF</h3><p>Draw and embed your signature</p></div>
-    </div>
-    <div class="tool-card" data-tool="security">
-      <div class="tool-card-icon" style="--c:#f74f6a"><i class="fa-solid fa-lock"></i></div>
-      <div class="tool-card-text"><h3>Protect PDF</h3><p>Password-protect your document</p></div>
-    </div>
+  </section>
 
-    <!-- SERVER-SIDE CONVERSIONS -->
-    <div class="tool-card tool-card-server" data-tool="pdftoword">
-      <div class="tool-card-icon" style="--c:#2b7cd3"><i class="fa-solid fa-file-word"></i></div>
-      <div class="tool-card-text"><h3>PDF to Word <span class="server-badge">Server</span></h3><p>Convert PDF into an editable DOCX file</p></div>
-    </div>
-    <div class="tool-card tool-card-server" data-tool="pdftoexcel">
-      <div class="tool-card-icon" style="--c:#1d7044"><i class="fa-solid fa-file-excel"></i></div>
-      <div class="tool-card-text"><h3>PDF to Excel <span class="server-badge">Server</span></h3><p>Extract tables into an editable XLSX file</p></div>
-    </div>
-    <div class="tool-card tool-card-server" data-tool="pdftopptx">
-      <div class="tool-card-icon" style="--c:#c43e1c"><i class="fa-solid fa-file-powerpoint"></i></div>
-      <div class="tool-card-text"><h3>PDF to PowerPoint <span class="server-badge">Server</span></h3><p>Convert PDF slides into editable PPTX</p></div>
-    </div>
-  </div>
-
-  <p class="home-note">
-    <i class="fa-solid fa-shield-halved"></i>
-    Most tools run 100% in your browser. <i class="fa-solid fa-server" style="margin-left:8px"></i> Server tools use your private Render server.
-  </p>
+  <footer class="home-footer">
+    <span>PDF Studio</span>
+    <span>Free and open source · <a href="https://github.com/TonyMcSauce/PDF_Studio" target="_blank" rel="noopener">View on GitHub</a></span>
+  </footer>
 </div>
 
 <!-- ═══════════════════════════════════════════════ -->
@@ -146,13 +263,13 @@
 <main class="app-layout">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" aria-label="Tools">
     <nav class="tool-nav">
       <button class="tool-btn" data-panel="merge"><i class="fa-solid fa-layer-group"></i><span>Merge</span></button>
       <button class="tool-btn" data-panel="split"><i class="fa-solid fa-scissors"></i><span>Split</span></button>
-      <button class="tool-btn" data-panel="compress"><i class="fa-solid fa-compress-arrows-alt"></i><span>Compress</span></button>
-      <button class="tool-btn" data-panel="imagestopdf"><i class="fa-solid fa-images"></i><span>Img→PDF</span></button>
-      <button class="tool-btn" data-panel="pages"><i class="fa-solid fa-th-large"></i><span>Pages</span></button>
+      <button class="tool-btn" data-panel="compress"><i class="fa-solid fa-compress"></i><span>Compress</span></button>
+      <button class="tool-btn" data-panel="imagestopdf"><i class="fa-solid fa-images"></i><span>Images</span></button>
+      <button class="tool-btn" data-panel="pages"><i class="fa-solid fa-table-cells-large"></i><span>Pages</span></button>
       <button class="tool-btn" data-panel="annotate"><i class="fa-solid fa-pen-nib"></i><span>Annotate</span></button>
       <button class="tool-btn" data-panel="text"><i class="fa-solid fa-font"></i><span>Text</span></button>
       <button class="tool-btn" data-panel="image"><i class="fa-solid fa-image"></i><span>Image</span></button>
@@ -166,11 +283,6 @@
       <button class="tool-btn tool-btn-server" data-panel="pdftoexcel"><i class="fa-solid fa-file-excel"></i><span>→ Excel</span></button>
       <button class="tool-btn tool-btn-server" data-panel="pdftopptx"><i class="fa-solid fa-file-powerpoint"></i><span>→ PPTX</span></button>
     </nav>
-    <div class="sidebar-bottom">
-      <button id="downloadBtn" class="download-btn" disabled>
-        <i class="fa-solid fa-download"></i><span>Download</span>
-      </button>
-    </div>
   </aside>
 
   <!-- PANELS -->
@@ -183,7 +295,7 @@
 
       <!-- Per-tool upload zone -->
       <div class="tool-upload-zone" id="mergeUploadZone">
-        <i class="fa-solid fa-files"></i>
+        <i class="fa-solid fa-copy"></i>
         <p>Drop PDFs here or click to add</p>
         <input type="file" id="mergeInput" accept="application/pdf" multiple hidden/>
         <button class="btn-primary" onclick="document.getElementById('mergeInput').click()">
@@ -195,11 +307,11 @@
 
       <div class="merge-preview-block">
         <div class="merge-preview-header">
-          <button id="mergePrevDoc" class="icon-btn" disabled><i class="fa-solid fa-chevron-left"></i></button>
+          <button id="mergePrevDoc" class="icon-btn" disabled aria-label="Previous PDF"><i class="fa-solid fa-chevron-left"></i></button>
           <button id="mergePrevPg"  class="icon-btn" disabled><i class="fa-solid fa-angle-left"></i></button>
           <span id="mergeDocLabel" class="merge-doc-label">No PDFs added yet</span>
           <button id="mergeNextPg"  class="icon-btn" disabled><i class="fa-solid fa-angle-right"></i></button>
-          <button id="mergeNextDoc" class="icon-btn" disabled><i class="fa-solid fa-chevron-right"></i></button>
+          <button id="mergeNextDoc" class="icon-btn" disabled aria-label="Next PDF"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
         <div class="merge-preview-canvas-wrap">
           <div id="mergePreviewPlaceholder" class="merge-preview-placeholder">
@@ -241,7 +353,7 @@
 
     <!-- ── COMPRESS ── -->
     <div id="panel-compress" class="panel">
-      <h2 class="panel-title"><i class="fa-solid fa-compress-arrows-alt"></i> Compress PDF</h2>
+      <h2 class="panel-title"><i class="fa-solid fa-compress"></i> Compress PDF</h2>
       <p class="panel-desc">Upload a PDF and reduce its file size by adjusting render quality.</p>
 
       <div class="tool-upload-zone" id="compressUploadZone">
@@ -278,7 +390,7 @@
         </label>
       </div>
       <button id="compressBtn" class="btn-action" disabled>
-        <i class="fa-solid fa-compress-arrows-alt"></i> Compress &amp; Download
+        <i class="fa-solid fa-compress"></i> Compress &amp; Download
       </button>
     </div>
 
@@ -318,7 +430,7 @@
 
     <!-- ── PAGES ── -->
     <div id="panel-pages" class="panel panel-pages">
-      <h2 class="panel-title"><i class="fa-solid fa-th-large"></i> Organize Pages</h2>
+      <h2 class="panel-title"><i class="fa-solid fa-table-cells-large"></i> Organize Pages</h2>
 
       <div class="tool-upload-zone" id="pagesUploadZone">
         <i class="fa-solid fa-file-arrow-up"></i>
@@ -330,10 +442,10 @@
       </div>
       <div id="pagesFileInfo" class="tool-file-info hidden"></div>
 
-      <div class="pages-toolbar" id="pagesToolbar" style="display:none">
+      <div class="pages-toolbar hidden" id="pagesToolbar">
         <button id="deleteSelectedBtn" class="btn-danger" disabled><i class="fa-solid fa-trash"></i> Delete</button>
-        <button id="rotateLeftBtn"  class="btn-secondary" disabled><i class="fa-solid fa-rotate-left"></i> ↺</button>
-        <button id="rotateRightBtn" class="btn-secondary" disabled><i class="fa-solid fa-rotate-right"></i> ↻</button>
+        <button id="rotateLeftBtn"  class="btn-secondary" disabled><i class="fa-solid fa-rotate-left"></i> Left</button>
+        <button id="rotateRightBtn" class="btn-secondary" disabled><i class="fa-solid fa-rotate-right"></i> Right</button>
         <button id="selectAllBtn"   class="btn-secondary"><i class="fa-solid fa-check-double"></i> All</button>
         <button id="deselectAllBtn" class="btn-secondary"><i class="fa-solid fa-xmark"></i> None</button>
       </div>
@@ -355,14 +467,14 @@
       <div id="annotateFileInfo" class="tool-file-info hidden"></div>
 
       <div id="annotateControls" class="tool-controls hidden">
-        <p class="panel-desc">Pick a tool, then draw directly on the preview.</p>
+        <p class="panel-desc">Pick a tool, then draw directly on the page you are viewing.</p>
         <div class="annotate-tools">
-          <button class="annotate-tool-btn active" data-atool="freehand" title="Freehand"><i class="fa-solid fa-pen"></i></button>
-          <button class="annotate-tool-btn" data-atool="highlight" title="Highlight"><i class="fa-solid fa-highlighter"></i></button>
-          <button class="annotate-tool-btn" data-atool="rect" title="Rectangle"><i class="fa-regular fa-square"></i></button>
-          <button class="annotate-tool-btn" data-atool="ellipse" title="Ellipse"><i class="fa-regular fa-circle"></i></button>
-          <button class="annotate-tool-btn" data-atool="arrow" title="Arrow"><i class="fa-solid fa-arrow-right"></i></button>
-          <button class="annotate-tool-btn" data-atool="line" title="Line"><i class="fa-solid fa-minus"></i></button>
+          <button class="annotate-tool-btn active" data-atool="freehand" title="Freehand" aria-label="Freehand"><i class="fa-solid fa-pen"></i></button>
+          <button class="annotate-tool-btn" data-atool="highlight" title="Highlight" aria-label="Highlight"><i class="fa-solid fa-highlighter"></i></button>
+          <button class="annotate-tool-btn" data-atool="rect" title="Rectangle" aria-label="Rectangle"><i class="fa-regular fa-square"></i></button>
+          <button class="annotate-tool-btn" data-atool="ellipse" title="Ellipse" aria-label="Ellipse"><i class="fa-regular fa-circle"></i></button>
+          <button class="annotate-tool-btn" data-atool="arrow" title="Arrow" aria-label="Arrow"><i class="fa-solid fa-arrow-right"></i></button>
+          <button class="annotate-tool-btn" data-atool="line" title="Line" aria-label="Line"><i class="fa-solid fa-minus"></i></button>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Color</label><input type="color" id="annotateColor" value="#f7c44f" class="input color-input"/></div>
@@ -417,8 +529,8 @@
             <input type="color" id="tbDefColor" value="#000000" class="input color-input"/>
           </div>
           <div class="tbar-group" style="flex-direction:row;align-items:flex-end;gap:4px">
-            <button id="tbDefBold"   class="tstyle-btn" title="Bold"><b>B</b></button>
-            <button id="tbDefItalic" class="tstyle-btn" title="Italic"><i>I</i></button>
+            <button id="tbDefBold"   class="tstyle-btn" title="Bold" aria-label="Bold"><b>B</b></button>
+            <button id="tbDefItalic" class="tstyle-btn" title="Italic" aria-label="Italic"><i>I</i></button>
           </div>
         </div>
 
@@ -518,8 +630,8 @@
             <div class="form-group">
               <label>Style</label>
               <div style="display:flex;gap:6px;margin-top:2px">
-                <button id="wmBold"   class="tstyle-btn active" title="Bold"><b>B</b></button>
-                <button id="wmItalic" class="tstyle-btn" title="Italic"><i>I</i></button>
+                <button id="wmBold"   class="tstyle-btn active" title="Bold" aria-label="Bold"><b>B</b></button>
+                <button id="wmItalic" class="tstyle-btn" title="Italic" aria-label="Italic"><i>I</i></button>
               </div>
             </div>
           </div>
@@ -552,7 +664,7 @@
         <!-- Live preview hint -->
         <div class="wm-hint">
           <i class="fa-solid fa-hand-pointer"></i>
-          Live preview active — drag watermark to reposition
+          Live preview active, drag watermark to reposition
         </div>
 
         <div class="form-group">
@@ -565,7 +677,12 @@
           </select>
         </div>
 
-        <button id="wmBtn" class="btn-action"><i class="fa-solid fa-stamp"></i> Apply Watermark to PDF</button>
+        <button id="wmBtn" class="btn-action"><i class="fa-solid fa-stamp"></i> Apply Watermark</button>
+        <div class="annotate-actions">
+          <button id="wmUndoBtn"  class="btn-secondary" disabled><i class="fa-solid fa-rotate-left"></i> Undo last</button>
+          <button id="wmClearBtn" class="btn-secondary" disabled><i class="fa-solid fa-trash"></i> Remove all</button>
+        </div>
+        <p class="hint">When you're happy with it, use <b>Download PDF</b> under the preview.</p>
       </div>
     </div>
 
@@ -605,11 +722,16 @@
           <select id="pnFormat" class="input">
             <option value="n">1 · 2 · 3</option>
             <option value="of">1 of 12 · 2 of 12</option>
-            <option value="dash">— 1 — · — 2 —</option>
+            <option value="dash">- 1 - · - 2 -</option>
             <option value="page">Page 1 · Page 2</option>
           </select>
         </div>
         <button id="pnBtn" class="btn-action"><i class="fa-solid fa-list-ol"></i> Add Page Numbers</button>
+        <div class="annotate-actions">
+          <button id="pnUndoBtn"  class="btn-secondary" disabled><i class="fa-solid fa-rotate-left"></i> Undo last</button>
+          <button id="pnClearBtn" class="btn-secondary" disabled><i class="fa-solid fa-trash"></i> Remove all</button>
+        </div>
+        <p class="hint">When you're happy with it, use <b>Download PDF</b> under the preview.</p>
       </div>
     </div>
 
@@ -628,14 +750,21 @@
       <div id="redactFileInfo" class="tool-file-info hidden"></div>
 
       <div id="redactControls" class="tool-controls hidden">
-        <p class="panel-desc">Click and drag on the preview to draw black redaction boxes.</p>
-        <div class="form-group"><label>Page</label><input type="number" id="redactPage" min="1" value="1" class="input"/></div>
+        <p class="panel-desc">Click and drag on the preview to draw boxes over anything you want hidden.</p>
+        <div class="form-group"><label>Box colour</label>
+          <div class="rd-colors" role="group" aria-label="Redaction colour">
+            <button class="rdclr active" data-color="#000000" style="--sw:#000000" aria-label="Black"></button>
+            <button class="rdclr" data-color="#ffffff" style="--sw:#ffffff" aria-label="White"></button>
+            <button class="rdclr" data-color="#6b6b6b" style="--sw:#6b6b6b" aria-label="Grey"></button>
+          </div>
+        </div>
+        <div id="redactBoxList" class="rdbox-list"></div>
         <div class="annotate-actions">
           <button id="redactUndoBtn"  class="btn-secondary"><i class="fa-solid fa-rotate-left"></i> Undo</button>
           <button id="redactClearBtn" class="btn-secondary"><i class="fa-solid fa-trash"></i> Clear</button>
           <button id="redactApplyBtn" class="btn-action"><i class="fa-solid fa-check"></i> Apply Redactions</button>
         </div>
-        <p class="hint mt" style="color:var(--danger)"><i class="fa-solid fa-triangle-exclamation"></i> Redactions are permanent.</p>
+        <p class="hint mt hint-danger"><i class="fa-solid fa-triangle-exclamation"></i> Redacted pages are flattened when you download, so the hidden text is gone for good, not just covered up.</p>
       </div>
     </div>
 
@@ -654,28 +783,19 @@
       <div id="signatureFileInfo" class="tool-file-info hidden"></div>
 
       <div id="signatureControls" class="tool-controls hidden">
-        <p class="panel-desc">Draw your signature below, then pick a position on the preview.</p>
+        <p class="panel-desc">Draw your signature below, then drag it into place on the preview.</p>
         <div class="sig-canvas-wrap"><canvas id="sigCanvas" width="500" height="160"></canvas></div>
         <div class="sig-toolbar">
           <div class="form-group inline"><label>Color</label><input type="color" id="sigColor" value="#000000" class="input color-input small"/></div>
           <div class="form-group inline"><label>Stroke</label><input type="range" id="sigStroke" min="1" max="10" value="2" class="range-input"/></div>
           <button id="clearSig" class="btn-secondary"><i class="fa-solid fa-eraser"></i> Clear</button>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>Page #</label><input type="number" id="sigPage" min="1" value="1" class="input"/></div>
-          <div class="form-group" style="justify-content:flex-end"><label>&nbsp;</label>
-            <button id="sigPickBtn" class="btn-secondary pick-btn"><i class="fa-solid fa-crosshairs"></i> Pick on Page</button>
-          </div>
+        <p class="hint">Your signature appears on the preview. Drag it into place and pull the corner to resize.</p>
+        <button id="addSigBtn" class="btn-action" disabled><i class="fa-solid fa-plus"></i> Embed Signature</button>
+        <div class="annotate-actions">
+          <button id="sigUndoBtn"  class="btn-secondary" disabled><i class="fa-solid fa-rotate-left"></i> Undo last</button>
+          <button id="sigClearBtn" class="btn-secondary" disabled><i class="fa-solid fa-trash"></i> Remove all</button>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>X</label><input type="number" id="sigX" value="50" class="input"/></div>
-          <div class="form-group"><label>Y</label><input type="number" id="sigY" value="50" class="input"/></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Width</label><input type="number" id="sigW" value="200" class="input"/></div>
-          <div class="form-group"><label>Height</label><input type="number" id="sigH" value="80" class="input"/></div>
-        </div>
-        <button id="addSigBtn" class="btn-action"><i class="fa-solid fa-plus"></i> Embed Signature</button>
       </div>
     </div>
 
@@ -694,32 +814,34 @@
       <div id="securityFileInfo" class="tool-file-info hidden"></div>
 
       <div id="securityControls" class="tool-controls hidden">
-        <p class="panel-desc">PDF will be downloaded and the notification will show a <code>qpdf</code> command to encrypt it.</p>
+        <div class="server-notice">
+          <i class="fa-solid fa-server" aria-hidden="true"></i>
+          <span>Encryption runs on our conversion server. Your PDF and password are sent over HTTPS, encrypted with AES-256 and deleted straight away.</span>
+        </div>
         <div class="form-group"><label>User Password</label>
           <div class="input-eye">
             <input type="password" id="userPassword" class="input" placeholder="Password to open…"/>
-            <button class="icon-btn" onclick="togglePwd('userPassword')"><i class="fa-solid fa-eye"></i></button>
+            <button class="icon-btn" onclick="togglePwd('userPassword')" aria-label="Show or hide password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
           </div>
         </div>
         <div class="form-group"><label>Owner Password <span class="hint">(optional)</span></label>
           <div class="input-eye">
             <input type="password" id="ownerPassword" class="input" placeholder="Permissions password…"/>
-            <button class="icon-btn" onclick="togglePwd('ownerPassword')"><i class="fa-solid fa-eye"></i></button>
+            <button class="icon-btn" onclick="togglePwd('ownerPassword')" aria-label="Show or hide owner password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
           </div>
         </div>
-        <button id="applyPwdBtn" class="btn-action"><i class="fa-solid fa-download"></i> Download + Encryption Tip</button>
-        <p class="hint mt">Nothing is sent to any server.</p>
+        <button id="applyPwdBtn" class="btn-action"><i class="fa-solid fa-lock"></i> Encrypt &amp; Download</button>
       </div>
     </div>
 
     <!-- ── PDF TO WORD ── -->
     <div id="panel-pdftoword" class="panel">
       <h2 class="panel-title"><i class="fa-solid fa-file-word" style="color:#2b7cd3"></i> PDF to Word</h2>
-      <p class="panel-desc">Convert your PDF into an editable DOCX file using your conversion server.</p>
+      <p class="panel-desc">Convert your PDF into an editable DOCX file on our conversion server.</p>
 
       <div class="server-notice">
         <i class="fa-solid fa-server"></i>
-        <span>Converted on your private Render server · Files are deleted immediately after download</span>
+        <span>Converted on our server over HTTPS. Your file is processed in memory and deleted as soon as the result is sent back.</span>
       </div>
 
       <div class="tool-upload-zone" id="pdftowordUploadZone">
@@ -744,7 +866,7 @@
 
       <div class="server-notice">
         <i class="fa-solid fa-server"></i>
-        <span>Converted on your private Render server · Files are deleted immediately after download</span>
+        <span>Converted on our server over HTTPS. Your file is processed in memory and deleted as soon as the result is sent back.</span>
       </div>
 
       <div class="tool-upload-zone" id="pdftoexcelUploadZone">
@@ -769,7 +891,7 @@
 
       <div class="server-notice">
         <i class="fa-solid fa-server"></i>
-        <span>Converted on your private Render server · Files are deleted immediately after download</span>
+        <span>Converted on our server over HTTPS. Your file is processed in memory and deleted as soon as the result is sent back.</span>
       </div>
 
       <div class="tool-upload-zone" id="pdftopptxUploadZone">
@@ -794,26 +916,28 @@
     <div class="preview-header">
       <span class="preview-label">Preview</span>
       <div class="preview-nav">
-        <button id="prevPage" class="icon-btn" disabled><i class="fa-solid fa-chevron-left"></i></button>
-        <span id="pageIndicator">— / —</span>
-        <button id="nextPage" class="icon-btn" disabled><i class="fa-solid fa-chevron-right"></i></button>
+        <button id="prevPage" class="icon-btn" disabled aria-label="Previous page"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+        <span id="pageIndicator" aria-live="polite">– / –</span>
+        <button id="nextPage" class="icon-btn" disabled aria-label="Next page"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
       </div>
       <div class="zoom-controls">
-        <button id="zoomOut" class="icon-btn" disabled><i class="fa-solid fa-minus"></i></button>
+        <button id="zoomOut" class="icon-btn" disabled aria-label="Zoom out"><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
         <span id="zoomLabel">100%</span>
-        <button id="zoomIn"  class="icon-btn" disabled><i class="fa-solid fa-plus"></i></button>
+        <button id="zoomIn"  class="icon-btn" disabled aria-label="Zoom in"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
       </div>
     </div>
     <div class="preview-canvas-wrap" id="previewWrap">
       <div id="previewPlaceholder" class="preview-placeholder">
         <i class="fa-solid fa-file-pdf"></i>
-        <p>Upload a PDF to preview it here</p>
+        <p>Your pages will appear here</p>
       </div>
       <canvas id="previewCanvas" class="hidden"></canvas>
       <canvas id="drawingLayer"  class="drawing-layer hidden"></canvas>
       <canvas id="placementOverlay" class="placement-overlay"></canvas>
       <canvas id="wmPreviewCanvas" class="wm-preview-canvas"></canvas>
       <div id="textBoxLayer"></div>
+      <div id="redactLayer" class="redact-layer"></div>
+      <div id="sigPlacementLayer" class="sig-placement-layer"></div>
     </div>
     <div class="preview-footer" id="previewFooter">
       <button id="downloadBtn" class="download-btn" disabled>
@@ -825,6 +949,15 @@
 </main>
 </div><!-- /editorScreen -->
 
-<script src="script.js"></script>
+<script src="js/core.js" defer></script>
+<script src="js/assemble.js" defer></script>
+<script src="js/annotate.js" defer></script>
+<script src="js/text.js" defer></script>
+<script src="js/watermark.js" defer></script>
+<script src="js/pagenumbers.js" defer></script>
+<script src="js/redact.js" defer></script>
+<script src="js/signature.js" defer></script>
+<script src="js/server.js" defer></script>
+<script src="js/init.js" defer></script>
 </body>
 </html>
