@@ -2,12 +2,12 @@
    Everything the app needs is served from this site, so once the page has
    loaded once, every in-browser tool keeps working offline.
    Server-backed tools (Protect and the Office conversions) still need a connection. */
-const CACHE = 'pdfstudio-v9';
+const CACHE = 'pdfstudio-v10';
 const SHELL = [
   './', './index.html', './style.css', './favicon.svg', './manifest.webmanifest',
   './icon-192.png', './icon-512.png',
   './js/theme-init.js', './js/core.js', './js/assemble.js', './js/annotate.js', './js/text.js', './js/watermark.js',
-  './js/pagenumbers.js', './js/redact.js', './js/signature.js', './js/server.js', './js/init.js',
+  './js/pagenumbers.js', './js/redact.js', './js/signature.js', './js/image.js', './js/server.js', './js/init.js',
   './vendor/pdfjs/pdf.min.js', './vendor/pdfjs/pdf.worker.min.js', './vendor/pdf-lib/pdf-lib.min.js',
   './vendor/sortable/Sortable.min.js',
   './vendor/fontawesome/css/all.min.css',

@@ -85,6 +85,23 @@ All of these are served from `vendor/` (licences in `vendor/LICENSES.md`).
 
 Drawing, redacting, signing, dragging watermarks and moving text boxes use Pointer Events, so a mouse, a pen and a finger all work the same way.
 
+## Keyboard shortcuts
+
+| Keys | Action |
+|---|---|
+| Ctrl/Cmd + S | Download the current result |
+| Page Up / Page Down | Previous / next page |
+| + / - | Zoom in / out |
+| Arrow keys (image selected) | Nudge the image. Add Shift to resize |
+
+## Tests
+
+A Playwright suite in `tests/` checks the main tools end to end (merge, page numbers, watermark, redact, compress, add image, shortcuts), that added text is real text, and that nothing contacts a third party. It runs on every push and pull request through GitHub Actions.
+
+```bash
+cd tests && npm install && npx playwright install chromium && npx playwright test
+```
+
 ## Deploy on GitHub Pages
 
 1. Go to **Settings → Pages** and set the source to the `main` branch, root folder.

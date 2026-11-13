@@ -145,6 +145,7 @@ function showHome() {
   if (typeof wmDeactivate === 'function') wmDeactivate();
   if (typeof sigDeactivate === 'function') sigDeactivate();
   if (typeof tbExit === 'function') tbExit();
+  if (typeof imDeactivate === 'function') imDeactivate();
 }
 function showEditor(tool) {
   hide($('homeScreen')); show($('editorScreen'));
@@ -190,6 +191,7 @@ function activatePanel(name) {
   if (typeof sigDeactivate === 'function') {
     if (name === 'signature' && S.toolPages.signature?.length) setTimeout(() => { if (!SIG.active) sigActivate(); }, 50); else sigDeactivate();
   }
+  if (typeof imDeactivate === 'function') { if (name === 'image' && S.toolPages.image?.length) setTimeout(imActivate, 50); else imDeactivate(); }
   if (S.placeMode && typeof setPlaceMode === 'function') setPlaceMode(null);
 }
 
@@ -266,6 +268,7 @@ function wirePdfUpload({ toolName, inputId, zoneId, infoId, controlsId }) {
         if (toolName === 'text')     tbCheckEnter();
         if (toolName === 'watermark') setTimeout(() => { if (typeof wmActivate==='function') wmActivate(); }, 50);
         if (toolName === 'signature') setTimeout(() => { if (typeof sigActivate==='function') sigActivate(); }, 50);
+        if (toolName === 'image') setTimeout(() => { if (typeof imActivate==='function') imActivate(); }, 50);
       }
       toast(`Loaded "${file.name}", ${doc.numPages} pages`, 'success');
     } catch (e) { console.error(e); toast(`Load failed: ${e.message}`, 'error'); }
@@ -432,6 +435,7 @@ async function previewMain(pg) {
     layer.style.width  = cRect.width  + 'px';
     layer.style.height = cRect.height + 'px';
     if (typeof tbSyncToPage === 'function') tbSyncToPage(pg);
+    if (typeof imSync === 'function') imSync();
 
     // Keep watermark preview canvas in sync
     const wmc = $('wmPreviewCanvas');
@@ -492,7 +496,6 @@ $('placementOverlay').addEventListener('click', e => {
   const cy = (e.clientY-rect.top)*(ov.height/rect.height);
   const sc = CFG.PREVIEW_SCALE * S.zoom;
   const px = Math.round(cx/sc), py = Math.round(cy/sc);
-    if (S.placeMode==='image')     { $('imgX').value=px;  $('imgY').value=py; }
   const ctx = ov.getContext('2d');
   ctx.clearRect(0,0,ov.width,ov.height);
   ctx.strokeStyle='#4f8ef7'; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
@@ -519,7 +522,6 @@ function setPlaceMode(mode, btnId) {
     toast('Click on the preview to set position.','info',3000);
   } else { clearPlacementOverlay(); }
 }
-$('imgPickBtn').addEventListener('click', () => setPlaceMode('image','imgPickBtn'));
 
 /* ── BUILD PDF ──
  * Pages are copied as real PDF objects (text stays selectable, links and

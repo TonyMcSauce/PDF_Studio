@@ -559,25 +559,12 @@
       <div id="imageFileInfo" class="tool-file-info hidden"></div>
 
       <div id="imageControls" class="tool-controls hidden">
-        <p class="panel-desc">Click <strong>Pick on Page</strong> then click the preview to position your image.</p>
-        <div class="form-group"><label>Image File (PNG or JPEG)</label>
+        <p class="panel-desc">Choose an image, then drag it into place on the page. Drag the corner to resize, or use the arrow keys to nudge it.</p>
+        <div class="form-group"><label for="overlayImageInput">Image file (PNG or JPEG)</label>
           <input type="file" id="overlayImageInput" accept="image/png,image/jpeg" class="input file-input"/>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>Page #</label><input type="number" id="imgPage" min="1" value="1" class="input"/></div>
-          <div class="form-group" style="justify-content:flex-end"><label>&nbsp;</label>
-            <button id="imgPickBtn" class="btn-secondary pick-btn"><i class="fa-solid fa-crosshairs"></i> Pick on Page</button>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>X</label><input type="number" id="imgX" value="50" class="input"/></div>
-          <div class="form-group"><label>Y</label><input type="number" id="imgY" value="50" class="input"/></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Width</label><input type="number" id="imgW" value="150" class="input"/></div>
-          <div class="form-group"><label>Height</label><input type="number" id="imgH" value="100" class="input"/></div>
-        </div>
-        <button id="addImageBtn" class="btn-action"><i class="fa-solid fa-plus"></i> Embed Image</button>
+        <p class="panel-desc" id="imgPageHint">The image goes on the page shown in the preview.</p>
+        <button id="addImageBtn" class="btn-action" disabled><i class="fa-solid fa-plus"></i> Embed Image</button>
       </div>
     </div>
 
@@ -920,9 +907,9 @@
     <div class="preview-header">
       <span class="preview-label">Preview</span>
       <div class="preview-nav">
-        <button id="prevPage" class="icon-btn" disabled aria-label="Previous page"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+        <button id="prevPage" class="icon-btn" disabled aria-label="Previous page" title="Previous page (Page Up)"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
         <span id="pageIndicator" aria-live="polite">– / –</span>
-        <button id="nextPage" class="icon-btn" disabled aria-label="Next page"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+        <button id="nextPage" class="icon-btn" disabled aria-label="Next page" title="Next page (Page Down)"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
       </div>
       <div class="zoom-controls">
         <button id="zoomOut" class="icon-btn" disabled aria-label="Zoom out"><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
@@ -942,9 +929,10 @@
       <div id="textBoxLayer"></div>
       <div id="redactLayer" class="redact-layer"></div>
       <div id="sigPlacementLayer" class="sig-placement-layer"></div>
+      <div id="imgPlacementLayer" class="sig-placement-layer img-placement-layer"></div>
     </div>
     <div class="preview-footer" id="previewFooter">
-      <button id="downloadBtn" class="download-btn" disabled>
+      <button id="downloadBtn" class="download-btn" disabled title="Download (Ctrl+S)">
         <i class="fa-solid fa-download"></i> Download PDF
       </button>
     </div>
@@ -961,6 +949,7 @@
 <script src="js/pagenumbers.js" defer></script>
 <script src="js/redact.js" defer></script>
 <script src="js/signature.js" defer></script>
+<script src="js/image.js" defer></script>
 <script src="js/server.js" defer></script>
 <script src="js/init.js" defer></script>
 </body>

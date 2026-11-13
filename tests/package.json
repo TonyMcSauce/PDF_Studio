@@ -1,0 +1,10 @@
+{
+  "name": "pdf-studio-tests",
+  "private": true,
+  "scripts": { "test": "playwright test" },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "3.11.174"
+  }
+}
