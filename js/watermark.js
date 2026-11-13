@@ -110,41 +110,25 @@ function wmDrawPreview() {
 
 // ── Draggable watermark on preview canvas ──────────
 (function() {
-  let dragging = false, lastX, lastY;
+  let dragging = false;
   const wmc = $('wmPreviewCanvas');
 
-  wmc.addEventListener('mousedown', e => {
-    dragging = true;
-    lastX = e.clientX; lastY = e.clientY;
-    wmc.style.cursor = 'grabbing';
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    const cv   = $('previewCanvas');
+  const moveTo = e => {
     const rect = wmc.getBoundingClientRect();
     WM.xFrac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     WM.yFrac = Math.max(0, Math.min(1, (e.clientY - rect.top)  / rect.height));
     wmDrawPreview();
-  });
-  document.addEventListener('mouseup', () => {
-    if (dragging) { dragging = false; $('wmPreviewCanvas').style.cursor = 'move'; }
-  });
-  // Touch support
-  wmc.addEventListener('touchstart', e => {
-    dragging = true; const t = e.touches[0]; lastX = t.clientX; lastY = t.clientY;
+  };
+  wmc.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    dragging = true; wmc.style.cursor = 'grabbing';
+    try { wmc.setPointerCapture(e.pointerId); } catch (_) {}
     e.preventDefault();
-  }, { passive: false });
-  wmc.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    const t = e.touches[0];
-    const rect = wmc.getBoundingClientRect();
-    WM.xFrac = Math.max(0, Math.min(1, (t.clientX - rect.left) / rect.width));
-    WM.yFrac = Math.max(0, Math.min(1, (t.clientY - rect.top)  / rect.height));
-    wmDrawPreview();
-    e.preventDefault();
-  }, { passive: false });
-  wmc.addEventListener('touchend', () => { dragging = false; });
+  });
+  wmc.addEventListener('pointermove', e => { if (dragging) { moveTo(e); e.preventDefault(); } });
+  const stop = () => { if (dragging) { dragging = false; wmc.style.cursor = 'move'; } };
+  wmc.addEventListener('pointerup', stop);
+  wmc.addEventListener('pointercancel', stop);
 })();
 
 // ── Activate / deactivate preview ─────────────────

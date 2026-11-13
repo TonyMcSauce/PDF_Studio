@@ -3,29 +3,33 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' blob: data: https://pdf-studio-server-1.onrender.com; object-src 'none'; base-uri 'self'; form-action 'none'"/>
   <title>PDF Studio · Private PDF tools in your browser</title>
   <meta name="description" content="Merge, split, compress, sign, redact, watermark and annotate PDFs right in your browser. Free, no sign-up, and your files stay on your device."/>
   <meta name="theme-color" content="#f3ede1" media="(prefers-color-scheme: light)"/>
   <meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)"/>
+  <link rel="canonical" href="https://tonymcsauce.github.io/PDF_Studio/"/>
   <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://tonymcsauce.github.io/PDF_Studio/"/>
   <meta property="og:title" content="PDF Studio · Private PDF tools in your browser"/>
   <meta property="og:description" content="16 PDF tools that run on your own device. No uploads, no sign-up, no tracking."/>
-  <meta property="og:image" content="og-image.png"/>
+  <meta property="og:image" content="https://tonymcsauce.github.io/PDF_Studio/og-image.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
   <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:image" content="https://tonymcsauce.github.io/PDF_Studio/og-image.png"/>
   <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
   <link rel="apple-touch-icon" href="icon-192.png"/>
   <link rel="manifest" href="manifest.webmanifest"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Bricolage+Grotesque:opsz,wght@12..96,300..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="preload" href="vendor/fonts/instrument-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin/>
+  <link rel="preload" href="vendor/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin/>
+  <link rel="stylesheet" href="vendor/fonts/fonts.css"/>
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css"/>
   <link rel="stylesheet" href="style.css"/>
-  <script>
-    (function(){try{var t=localStorage.getItem('pdfstudio-theme');if(!t)t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js" defer></script>
+  <script src="js/theme-init.js"></script>
+  <script src="vendor/pdfjs/pdf.min.js" defer></script>
+  <script src="vendor/pdf-lib/pdf-lib.min.js" defer></script>
+  <script src="vendor/sortable/Sortable.min.js" defer></script>
 </head>
 <body>
 

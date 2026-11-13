@@ -710,6 +710,31 @@ code { font-family: var(--mono); font-size: .85em; background: var(--surface-3);
 .sig-box img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block }
 .sig-resize { position: absolute; right: -6px; bottom: -6px; width: 13px; height: 13px; background: var(--accent); border: 2px solid #fff; border-radius: 2px; cursor: se-resize }
 
+.tb-move {
+  position: absolute; top: -12px; left: -12px; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--ink); color: var(--bg); border: 2px solid #fff;
+  font-size: .56rem; cursor: move; z-index: 300; opacity: 0; transition: opacity .15s; touch-action: none; box-shadow: var(--shadow-sm);
+}
+.inline-textbox:hover .tb-move, .inline-textbox.selected .tb-move { opacity: 1 }
+
+/* Drawing surfaces own their gestures, so a finger draws instead of scrolling the page */
+#drawingLayer, .redact-layer, .sig-placement-layer .sig-box, .sig-resize, .wm-preview-canvas, .tb-resize-handle, .rdbox, #sigCanvas {
+  touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.inline-textbox { touch-action: manipulation }
+
+/* Bigger grab targets on touchscreens */
+@media (pointer: coarse) {
+  .tb-delete, .rdx { width: 28px; height: 28px; top: -14px; right: -14px; font-size: .75rem }
+  .tb-move { width: 30px; height: 30px; top: -15px; left: -15px; font-size: .7rem }
+  .tb-resize-handle, .sig-resize { width: 22px; height: 22px; right: -11px; bottom: -11px; border-radius: 4px }
+  .inline-textbox .tb-delete, .inline-textbox .tb-move, .inline-textbox .tb-resize-handle { opacity: 0 }
+  .inline-textbox.selected .tb-delete, .inline-textbox.selected .tb-move, .inline-textbox.selected .tb-resize-handle { opacity: 1 }
+  .rdx { opacity: 1 }
+  .btn-secondary, .btn-danger, .tstyle-btn, .icon-btn { min-height: 42px }
+  .icon-btn { min-width: 42px }
+}
+
 /* ═══ LOADING / TOAST ═══ */
 .loading-overlay {
   position: fixed; inset: 0; z-index: 9990; display: grid; place-items: center;

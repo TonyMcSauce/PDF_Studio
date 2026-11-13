@@ -180,7 +180,7 @@ function tbCreate(xPx, yPx) {
   del.className   = 'tb-delete';
   del.textContent = '✕';
   del.title       = 'Delete box';
-  del.addEventListener('mousedown', e => { e.stopPropagation(); e.preventDefault(); });
+  del.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); });
   del.addEventListener('click',     e => { e.stopPropagation(); tbRemove(id); });
 
   // SE resize handle
@@ -188,6 +188,13 @@ function tbCreate(xPx, yPx) {
   rz.className  = 'tb-resize-handle';
   rz.title      = 'Drag to resize';
 
+  // Move handle: a border is too thin to grab with a finger
+  const mv      = document.createElement('div');
+  mv.className  = 'tb-move';
+  mv.title      = 'Drag to move';
+  mv.innerHTML  = '<i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i>';
+
+  box.appendChild(mv);
   box.appendChild(content);
   box.appendChild(del);
   box.appendChild(rz);
@@ -206,10 +213,13 @@ function tbCreate(xPx, yPx) {
     e.preventDefault(); e.stopPropagation();
   };
 
-  box.addEventListener('mousedown', e => {
+  box.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     tbSelect(id);
     // Resize handle
     if (e.target === rz) { startDrag('resize', e); return; }
+    // Move handle
+    if (e.target === mv || e.target.closest('.tb-move')) { startDrag('move', e); return; }
     // Content → don't drag, allow typing
     if (e.target === content || e.target.closest('.tb-content')) {
       e.stopPropagation(); return;
@@ -233,8 +243,9 @@ function tbCreate(xPx, yPx) {
     }
   };
   const onMouseUp = () => { dragMode = null; };
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup',   onMouseUp);
+  document.addEventListener('pointermove', onMouseMove);
+  document.addEventListener('pointerup',   onMouseUp);
+  document.addEventListener('pointercancel', onMouseUp);
 
   // Focus → select
   content.addEventListener('focus', () => tbSelect(id));
@@ -249,7 +260,7 @@ function tbCreate(xPx, yPx) {
   TB.boxes.push(record);
   tbUpdateApplyBtn();
   tbSelect(id);
-  setTimeout(() => { content.focus(); placeCursorAtEnd(content); }, 20);
+  content.focus({ preventScroll: true }); placeCursorAtEnd(content);
   return record;
 }
 
@@ -304,7 +315,8 @@ function tbSyncToPage(pg) {
 }
 
 // ── Click on empty layer → create new box ─────────
-$('textBoxLayer').addEventListener('mousedown', e => {
+// 'click' (not pointerdown) so the keyboard can open on iOS, which only allows focus inside a tap
+$('textBoxLayer').addEventListener('click', e => {
   if (!TB.active) return;
   if (e.target !== $('textBoxLayer')) return; // only empty space
   const rect = $('textBoxLayer').getBoundingClientRect();
@@ -312,7 +324,7 @@ $('textBoxLayer').addEventListener('mousedown', e => {
 });
 
 // ── Click outside boxes → deselect ───────────────
-document.addEventListener('mousedown', e => {
+document.addEventListener('pointerdown', e => {
   if (!TB.active) return;
   if (e.target.closest('.inline-textbox')) return;
   if (e.target.closest('#tbFloatBar'))     return;
@@ -361,6 +373,10 @@ $('addTextBtn').addEventListener('click', async () => {
       size,
       x:      bx * scaleX,
       y:      by * scaleY,
+      w:      box.el.offsetWidth * scaleX,
+      padX:   4 * scaleX,
+      padY:   2 * scaleY,
+      lineHeight: 1.4,
       color:  rgbToHex(cs.color),
       font:   cs.fontFamily.replace(/['"]/g,'').split(',')[0].trim(),
       bold:   cs.fontWeight === 'bold' || parseInt(cs.fontWeight) >= 700,

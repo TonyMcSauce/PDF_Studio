@@ -13,7 +13,7 @@ const dl=$('drawingLayer');
 function getDrawPos(e){
   // Always measure against previewCanvas, not drawingLayer, to avoid CSS offset issues
   const cv=document.getElementById('previewCanvas');
-  const rect=cv.getBoundingClientRect(),src=e.touches?e.touches[0]:e;
+  const rect=cv.getBoundingClientRect(),src=e;
   return{x:(src.clientX-rect.left)*(cv.width/rect.width),y:(src.clientY-rect.top)*(cv.height/rect.height)};
 }
 function enterAnnotateMode(){
@@ -30,23 +30,32 @@ function redrawAnnoteLayer(){
   const sc=CFG.PREVIEW_SCALE*S.zoom;
   S.annoteStrokes.forEach(o=>drawAnnotation(ctx,o,sc));
 }
-dl.addEventListener('mousedown',e=>{
+/* Pointer events cover mouse, pen and finger with one code path */
+function endStroke(){
+  if(!S.annoteDrawing)return;
+  S.annoteDrawing=false;
+  if(S.annoteCurStroke){S.annoteStrokes.push(S.annoteCurStroke);S.annoteCurStroke=null;}
+  redrawAnnoteLayer();
+}
+dl.addEventListener('pointerdown',e=>{
   if(!$('previewWrap').classList.contains('drawing-active'))return;
+  if(e.pointerType==='mouse'&&e.button!==0)return;
   e.preventDefault(); S.annoteDrawing=true;
+  try{dl.setPointerCapture(e.pointerId);}catch(_){}
   const p=getDrawPos(e),sc=CFG.PREVIEW_SCALE*S.zoom;
   const color=$('annotateColor').value,size=+$('annotateSize').value;
   if(S.annoteTool==='freehand'){S.annoteCurStroke={type:'annotation',tool:'freehand',color,size,points:[{x:p.x/sc,y:p.y/sc}]};}
   else{S.annoteStart=p;S.annoteCurStroke={type:'annotation',tool:S.annoteTool,color,size,x:p.x/sc,y:p.y/sc,w:0,h:0};}
 });
-dl.addEventListener('mousemove',e=>{
+dl.addEventListener('pointermove',e=>{
   if(!S.annoteDrawing||!S.annoteCurStroke)return; e.preventDefault();
   const p=getDrawPos(e),sc=CFG.PREVIEW_SCALE*S.zoom;
   if(S.annoteTool==='freehand'){S.annoteCurStroke.points.push({x:p.x/sc,y:p.y/sc});}
   else{const st=S.annoteStart;S.annoteCurStroke.w=(p.x-st.x)/sc;S.annoteCurStroke.h=(p.y-st.y)/sc;}
   redrawAnnoteLayer(); drawAnnotation(dl.getContext('2d'),S.annoteCurStroke,sc);
 });
-dl.addEventListener('mouseup',()=>{if(!S.annoteDrawing)return;S.annoteDrawing=false;if(S.annoteCurStroke){S.annoteStrokes.push(S.annoteCurStroke);S.annoteCurStroke=null;}redrawAnnoteLayer();});
-dl.addEventListener('mouseleave',()=>{if(S.annoteDrawing){S.annoteDrawing=false;if(S.annoteCurStroke){S.annoteStrokes.push(S.annoteCurStroke);S.annoteCurStroke=null;}redrawAnnoteLayer();}});
+dl.addEventListener('pointerup',endStroke);
+dl.addEventListener('pointercancel',endStroke);
 $('annotateUndoBtn').addEventListener('click',()=>{S.annoteStrokes.pop();redrawAnnoteLayer();});
 $('annotateClearBtn').addEventListener('click',()=>{S.annoteStrokes=[];redrawAnnoteLayer();});
 $('annotateApplyBtn').addEventListener('click',async()=>{

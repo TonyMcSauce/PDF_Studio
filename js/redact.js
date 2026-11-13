@@ -61,7 +61,7 @@ function rdUpdateList() {
   RD.boxes.forEach((b, i) => {
     const item = document.createElement('div');
     item.className = 'rdbox-item';
-    item.innerHTML = `<span>Box ${i+1} &nbsp;·&nbsp; ${Math.round(b.wFrac*100)}% × ${Math.round(b.hFrac*100)}%</span>
+    item.innerHTML = `<span>Page ${b.page} &nbsp;·&nbsp; box ${i+1} &nbsp;·&nbsp; ${Math.round(b.wFrac*100)}% × ${Math.round(b.hFrac*100)}%</span>
       <button onclick="rdRemoveBox(${i})"><i class="fa-solid fa-xmark"></i></button>`;
     list.appendChild(item);
   });
@@ -97,7 +97,7 @@ function rdCreateBox(xFrac, yFrac, wFrac, hFrac, color) {
   el.appendChild(xBtn);
 
   rdLayer.appendChild(el);
-  const box = { el, xFrac, yFrac, wFrac, hFrac, color: color || '#000' };
+  const box = { el, page: S.curPage, xFrac, yFrac, wFrac, hFrac, color: color || '#000' };
   RD.boxes.push(box);
   rdUpdateList();
   return box;
@@ -106,6 +106,7 @@ function rdCreateBox(xFrac, yFrac, wFrac, hFrac, color) {
 function rdRenderBoxes() {
   // Re-render all existing boxes (after page change / resize)
   RD.boxes.forEach(b => {
+    b.el.style.display = b.page === S.curPage ? '' : 'none';   // boxes belong to their own page
     b.el.style.left   = (b.xFrac * 100) + '%';
     b.el.style.top    = (b.yFrac * 100) + '%';
     b.el.style.width  = (b.wFrac * 100) + '%';
@@ -113,9 +114,11 @@ function rdRenderBoxes() {
   });
 }
 
-// Mouse drag to draw boxes
-rdLayer.addEventListener('mousedown', e => {
+// Drag (mouse, pen or finger) to draw boxes
+rdLayer.addEventListener('pointerdown', e => {
   if (!RD.active || e.target !== rdLayer && e.target !== rdDrag) return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  try { rdLayer.setPointerCapture(e.pointerId); } catch (_) {}
   const rect = rdLayer.getBoundingClientRect();
   RD.drawing = true;
   RD.startX  = e.clientX - rect.left;
@@ -128,7 +131,7 @@ rdLayer.addEventListener('mousedown', e => {
   e.preventDefault();
 });
 
-document.addEventListener('mousemove', e => {
+document.addEventListener('pointermove', e => {
   if (!RD.drawing) return;
   const rect = rdLayer.getBoundingClientRect();
   const cx = e.clientX - rect.left;
@@ -143,7 +146,8 @@ document.addEventListener('mousemove', e => {
   rdDrag.style.height = h + 'px';
 });
 
-document.addEventListener('mouseup', e => {
+document.addEventListener('pointercancel', () => { RD.drawing = false; rdDrag.style.display = 'none'; });
+document.addEventListener('pointerup', e => {
   if (!RD.drawing) return;
   RD.drawing = false;
   rdDrag.style.display = 'none';
@@ -177,12 +181,12 @@ $('redactApplyBtn').addEventListener('click', async () => {
 
   loading(true, 'Applying redactions…');
   try {
-    const pgIdx = S.curPage - 1;
-    const pdfPage = await pages[pgIdx].pdfJsDoc.getPage(pages[pgIdx].pageNum);
-    const vp      = pdfPage.getViewport({ scale: 1 });
-
-    RD.boxes.forEach(b => {
-      pages[pgIdx].overlays.push({
+    const vps = {};
+    for (const b of RD.boxes) {
+      const idx = b.page - 1;
+      if (!vps[idx]) vps[idx] = (await pages[idx].pdfJsDoc.getPage(pages[idx].pageNum)).getViewport({ scale: 1 });
+      const vp = vps[idx];
+      pages[idx].overlays.push({
         type:  'redact',
         x:     b.xFrac * vp.width,
         y:     b.yFrac * vp.height,
@@ -190,7 +194,7 @@ $('redactApplyBtn').addEventListener('click', async () => {
         h:     b.hFrac * vp.height,
         color: b.color,
       });
-    });
+    }
 
     // Clear boxes and re-render
     RD.boxes.forEach(b => b.el.remove());
