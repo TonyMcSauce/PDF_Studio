@@ -1,13 +1,17 @@
 /* PDF Studio service worker
    Everything the app needs is served from this site, so once the page has
    loaded once, every in-browser tool keeps working offline.
-   Server-backed tools (Protect and the Office conversions) still need a connection. */
-const CACHE = 'pdfstudio-v10';
+   Server-backed tools (Protect and the Office conversions) still need a connection.
+   The HEIC decoder (js/heic-worker.js and vendor/libheif/) is not precached,
+   so visitors who never open a HEIC photo do not download it. It is cached
+   the first time it is used and works offline from then on. */
+const CACHE = 'pdfstudio-v11';
 const SHELL = [
   './', './index.html', './style.css', './favicon.svg', './manifest.webmanifest',
   './icon-192.png', './icon-512.png',
   './js/theme-init.js', './js/core.js', './js/assemble.js', './js/annotate.js', './js/text.js', './js/watermark.js',
   './js/pagenumbers.js', './js/redact.js', './js/signature.js', './js/image.js', './js/server.js', './js/init.js',
+  './js/imagekit.js', './js/photo.js', './js/pdftoimages.js',
   './vendor/pdfjs/pdf.min.js', './vendor/pdfjs/pdf.worker.min.js', './vendor/pdf-lib/pdf-lib.min.js',
   './vendor/sortable/Sortable.min.js',
   './vendor/fontawesome/css/all.min.css',

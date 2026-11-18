@@ -26,6 +26,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = CFG.WORKER;
 const S = {
   // Each tool stores its own pages array independently
   toolPages: {},      // { toolName: [pageDesc, ...] }
+  toolFileNames: {},  // { toolName: original file name }
   activeTool: null,
 
   // Convenience getters for current tool's pages
@@ -193,6 +194,8 @@ function activatePanel(name) {
   }
   if (typeof imDeactivate === 'function') { if (name === 'image' && S.toolPages.image?.length) setTimeout(imActivate, 50); else imDeactivate(); }
   if (S.placeMode && typeof setPlaceMode === 'function') setPlaceMode(null);
+  if (typeof photoActivate === 'function') photoActivate(name);
+  if (name === 'pdftoimages' && typeof piUpdate === 'function') piUpdate();
 }
 
 document.querySelectorAll('.tool-btn').forEach(btn => {
@@ -222,6 +225,7 @@ const TOOL_ACTION_BTN = {
   redact:      'redactApplyBtn',
   signature:   'addSigBtn',
   security:    'applyPwdBtn',
+  pdftoimages: 'pdfImgBtn',
 };
 
 function wirePdfUpload({ toolName, inputId, zoneId, infoId, controlsId }) {
@@ -237,6 +241,7 @@ function wirePdfUpload({ toolName, inputId, zoneId, infoId, controlsId }) {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const doc   = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
       if (toolName === 'compress') S.compressOrigSize = file.size;
+      S.toolFileNames[toolName] = file.name;
       S.toolPages[toolName] = Array.from({ length: doc.numPages }, (_, i) => ({
         pdfJsDoc: doc, pageNum: i + 1, rotation: 0, overlays: [],
       }));
@@ -270,6 +275,7 @@ function wirePdfUpload({ toolName, inputId, zoneId, infoId, controlsId }) {
         if (toolName === 'signature') setTimeout(() => { if (typeof sigActivate==='function') sigActivate(); }, 50);
         if (toolName === 'image') setTimeout(() => { if (typeof imActivate==='function') imActivate(); }, 50);
       }
+      if (toolName === 'pdftoimages' && typeof piLoaded === 'function') piLoaded();
       toast(`Loaded "${file.name}", ${doc.numPages} pages`, 'success');
     } catch (e) { console.error(e); toast(`Load failed: ${e.message}`, 'error'); }
     finally { loading(false); }
@@ -312,6 +318,7 @@ wirePdfUpload({ toolName:'watermark',  inputId:'watermarkFileInput',  zoneId:'wa
 wirePdfUpload({ toolName:'pagenumbers',inputId:'pnFileInput',         zoneId:'pnUploadZone',         infoId:'pnFileInfo',         controlsId:'pnControls' });
 wirePdfUpload({ toolName:'redact',     inputId:'redactFileInput',     zoneId:'redactUploadZone',     infoId:'redactFileInfo',     controlsId:'redactControls' });
 wirePdfUpload({ toolName:'signature',  inputId:'signatureFileInput',  zoneId:'signatureUploadZone',  infoId:'signatureFileInfo',  controlsId:'signatureControls' });
+wirePdfUpload({ toolName:'pdftoimages',inputId:'pdfImgFileInput',     zoneId:'pdfImgUploadZone',     infoId:'pdfImgFileInfo',     controlsId:'pdfImgControls' });
 wirePdfUpload({ toolName:'security',   inputId:'securityFileInput',   zoneId:'securityUploadZone',   infoId:'securityFileInfo',   controlsId:'securityControls' });
 
 /* ── RENDER ENGINE ── */
