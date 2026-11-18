@@ -119,9 +119,24 @@ $('compressBtn').addEventListener('click', async () => {
 /* ── IMAGES TO PDF ── */
 async function addImgToPdfFiles(files) {
   for (const f of Array.from(files)) {
-    if (!f.type.startsWith('image/')) { toast(`Not an image: ${f.name}`,'error'); continue; }
-    const imgEl = await loadImgEl(f);
-    S.imgToPdfFiles.push({ file:f, imgEl });
+    if (!okSize(f)) continue;
+    const kind = await IK.sniff(f);
+    if (!kind) { toast(`Not an image: ${f.name}`,'error'); continue; }
+    try {
+      let file = f;
+      if (kind === 'heic') {
+        // Browsers other than Safari cannot show HEIC, so turn it into a JPG first
+        loading(true, `Reading ${f.name}…`);
+        const d = await IK.decode(f, kind);
+        const sz = IK.fitSize(d.width, d.height, null);
+        const blob = await IK.encode(IK.toCanvas(d, sz.width, sz.height, '#ffffff'), 'image/jpeg', 0.92);
+        IK.release(d);
+        file = new File([blob], IK.baseName(f.name) + '.jpg', { type: 'image/jpeg' });
+      }
+      const imgEl = await loadImgEl(file);
+      S.imgToPdfFiles.push({ file, imgEl, name: f.name, png: kind === 'png' });
+    } catch (e) { console.warn(e); toast(`Could not open ${f.name}`, 'error'); }
+    finally { loading(false); }
   }
   refreshImgToPdfList();
 }
@@ -131,7 +146,7 @@ function refreshImgToPdfList() {
     const li = document.createElement('li');
     li.className = 'img-to-pdf-item';
     li.innerHTML = `<img src="${item.imgEl.src}" alt=""/>
-      <span>${escHtml(item.file.name)}</span>
+      <span>${escHtml(item.name || item.file.name)}</span>
       <button class="icon-btn danger" onclick="removeImgFile(${i})"><i class="fa-solid fa-xmark"></i></button>`;
     list.appendChild(li);
   });
@@ -158,14 +173,17 @@ $('imgToPdfBtn').addEventListener('click', async () => {
     const ori   = $('imgToPdfOrientation').value;
     for (const item of S.imgToPdfFiles) {
       let img;
-      if (item.file.type === 'image/png') {
+      if (item.png) {
         // Embed PNGs losslessly, transparency intact
         img = await doc.embedPng(new Uint8Array(await item.file.arrayBuffer()));
       } else {
-        // JPEGs go through a canvas so phone photos keep their EXIF orientation
+        // Everything else goes through a canvas, so phone photos keep their EXIF
+        // orientation and WebP, AVIF and GIF files become JPGs pdf-lib can embed
         const cv = document.createElement('canvas');
         cv.width=item.imgEl.naturalWidth; cv.height=item.imgEl.naturalHeight;
-        cv.getContext('2d').drawImage(item.imgEl,0,0);
+        const cx = cv.getContext('2d');
+        cx.fillStyle='#ffffff'; cx.fillRect(0,0,cv.width,cv.height);
+        cx.drawImage(item.imgEl,0,0);
         img = await doc.embedJpg(dataUrlToBytes(cv.toDataURL('image/jpeg',0.95)));
       }
       const iw=item.imgEl.naturalWidth, ih=item.imgEl.naturalHeight;

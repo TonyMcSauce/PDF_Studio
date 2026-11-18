@@ -1,6 +1,6 @@
 # PDF Studio
 
-**Private PDF tools that run in your browser.** Merge, split, compress, organise, annotate, sign, redact and watermark PDFs without uploading them anywhere. No sign-up, no tracking and no build step.
+**Private PDF and photo tools that run in your browser.** Merge, split, compress, organise, annotate, sign, redact and watermark PDFs, and convert, resize and clean up photos (HEIC included) without uploading them anywhere. No sign-up, no tracking and no build step.
 
 ![PDF Studio](og-image.png)
 
@@ -24,12 +24,19 @@
 | 14 | PDF to Word | Conversion server |
 | 15 | PDF to Excel | Conversion server |
 | 16 | PDF to PowerPoint | Conversion server |
+| 17 | HEIC to JPG | Your device |
+| 18 | Convert Image (HEIC, JPG, PNG, WebP, AVIF to JPG, PNG or WebP) | Your device |
+| 19 | Resize & Compress (by size, percentage or target file size) | Your device |
+| 20 | Remove Photo Details (GPS location, camera, dates) | Your device |
+| 21 | PDF to Images (JPG or PNG, 72 to 300 DPI) | Your device |
+
+Images to PDF also accepts HEIC and WebP photos. Several results download together as a ZIP.
 
 Files up to 100 MB are supported.
 
 ## Privacy
 
-- **Tools 01 to 12** never send your file anywhere. Once the page has loaded, they also work offline thanks to a service worker.
+- **Tools 01 to 12 and 17 to 21** never send your file anywhere. Once the page has loaded, they also work offline thanks to a service worker (the HEIC decoder joins the offline cache the first time it is used).
 - **Tools 13 to 16** send the file to the companion server ([pdf-studio-server](https://github.com/TonyMcSauce/pdf-studio-server)) over HTTPS. It is processed in memory and deleted once the result is returned. For Protect, the password is sent along with the file.
 - No analytics, no ads and no cookies. Only your theme choice is saved, in local storage.
 - Every library and font is bundled in `vendor/`, so the page makes no requests to third parties. A Content Security Policy enforces that, and only allows connections to the page itself and the companion server.
@@ -39,6 +46,14 @@ Files up to 100 MB are supported.
 Pages are copied into the new file as real PDF objects with [pdf-lib](https://pdf-lib.js.org/), so text stays selectable and searchable, and links, fonts and vector graphics come through untouched. Rotation is saved as page metadata, which loses nothing. Text you add (Add Text, page numbers, text watermarks) is written as real, selectable text using the standard PDF fonts. Characters those fonts cannot encode fall back to an image. Images, signatures, annotations and image watermarks are drawn on a transparent layer at 3× resolution and stamped on top.
 
 Compress never makes a file bigger: if the result would not be smaller, nothing is downloaded and your original stands.
+
+## How photos are handled
+
+- **HEIC** files open natively where the browser can (Safari), and otherwise through [libheif](https://github.com/strukturag/libheif) compiled to WebAssembly. It runs in a Web Worker, so large iPhone photos never freeze the page, and it is only downloaded the first time someone opens a HEIC file.
+- **Rotation** from the camera is always respected, so photos never come out sideways.
+- **Remove Photo Details** edits JPG, PNG and WebP files directly instead of re-saving them: the location, camera, date, XMP, IPTC and comment blocks are cut out and the compressed picture is left byte for byte untouched. A tiny orientation tag is kept so the photo still shows upright.
+- **Convert Image** removes those details by default. Untick the option to carry them over (JPG output only).
+- **Resize & Compress** can aim for a file size such as "under 1 MB". It finds the best quality that fits and only shrinks the picture if quality alone is not enough. Re-saving a photo in its own format and size never makes it bigger.
 
 A page is flattened to an image in only two cases:
 
@@ -59,6 +74,10 @@ js/pagenumbers.js     Page numbers
 js/redact.js          Redact
 js/signature.js       Sign
 js/server.js          Protect and Office conversions (server-backed)
+js/imagekit.js        Photo decoding, encoding, metadata and ZIP helpers
+js/heic-worker.js     HEIC decoder (runs libheif in a Web Worker)
+js/photo.js           HEIC to JPG, Convert, Resize & Compress, Remove Photo Details
+js/pdftoimages.js     PDF to Images
 js/init.js            Main download button, start-up, service worker
 js/theme-init.js      Sets the theme before first paint
 vendor/               Bundled libraries and fonts
@@ -76,6 +95,7 @@ Each tool lives in its own file and shares the globals set up in `core.js`. If o
 | [PDF.js 3.11](https://mozilla.github.io/pdf.js/) | Render pages to canvas |
 | [pdf-lib 1.17](https://pdf-lib.js.org/) | Build, copy and edit PDFs |
 | [SortableJS 1.15](https://sortablejs.github.io/Sortable/) | Drag-to-reorder |
+| [libheif 1.23](https://github.com/strukturag/libheif) via [libheif-js](https://github.com/catdad-experiments/libheif-js) | Decode HEIC and HEIF photos |
 | [Font Awesome 6 (free)](https://fontawesome.com/) | Icons |
 | Instrument Serif, Bricolage Grotesque, IBM Plex Mono | Typefaces |
 
@@ -97,7 +117,7 @@ Drawing, redacting, signing, dragging watermarks and moving text boxes use Point
 
 ## Tests
 
-A Playwright suite in `tests/` checks the main tools end to end (merge, page numbers, watermark, redact, compress, add image, shortcuts), that added text is real text, and that nothing contacts a third party. It runs on every push and pull request through GitHub Actions.
+A Playwright suite in `tests/` checks the main tools end to end (merge, page numbers, watermark, redact, compress, add image, shortcuts, every photo tool with real HEIC and JPG fixtures, PDF to Images), that added text is real text, and that nothing contacts a third party. It runs on every push and pull request through GitHub Actions.
 
 ```bash
 cd tests && npm install && npx playwright install chromium && npx playwright test

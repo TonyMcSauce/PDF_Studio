@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' blob: data: https://pdf-studio-server-1.onrender.com; object-src 'none'; base-uri 'self'; form-action 'none'"/>
   <title>PDF Studio · Private PDF tools in your browser</title>
-  <meta name="description" content="Merge, split, compress, sign, redact, watermark and annotate PDFs right in your browser. Free, no sign-up, and your files stay on your device."/>
+  <meta name="description" content="Merge, split, compress, sign, redact and annotate PDFs, and convert HEIC photos to JPG, right in your browser. Free, no sign-up, and your files stay on your device."/>
   <meta name="theme-color" content="#f3ede1" media="(prefers-color-scheme: light)"/>
   <meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)"/>
   <link rel="canonical" href="https://tonymcsauce.github.io/PDF_Studio/"/>
   <meta property="og:type" content="website"/>
   <meta property="og:url" content="https://tonymcsauce.github.io/PDF_Studio/"/>
   <meta property="og:title" content="PDF Studio · Private PDF tools in your browser"/>
-  <meta property="og:description" content="16 PDF tools that run on your own device. No uploads, no sign-up, no tracking."/>
+  <meta property="og:description" content="21 tools for PDFs and photos that run on your own device. No uploads, no sign-up, no tracking."/>
   <meta property="og:image" content="https://tonymcsauce.github.io/PDF_Studio/og-image.png"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
@@ -83,13 +83,13 @@
     <div class="hero-copy">
       <p class="kicker"><span class="kicker-dot" aria-hidden="true"></span>PDF Studio · Private by design</p>
       <h1>Every PDF job,<br/><em>done on your own desk.</em></h1>
-      <p class="hero-sub">Merge, split, sign, redact and mark up PDFs right in your browser. Your files stay on this device, with no uploads, no sign-up and nothing to install.</p>
+      <p class="hero-sub">Merge, split, sign, redact and mark up PDFs, and convert, resize and clean up photos, right in your browser. Your files stay on this device, with no uploads, no sign-up and nothing to install.</p>
       <div class="hero-actions">
         <button class="btn-hero" data-open-tool="merge">Start with Merge <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i></button>
-        <a class="btn-ghost" href="#tools">Browse all 16 tools</a>
+        <a class="btn-ghost" href="#tools">Browse all 21 tools</a>
       </div>
       <ul class="hero-facts">
-        <li><b>16</b><span>tools</span></li>
+        <li><b>21</b><span>tools</span></li>
         <li><b>0</b><span>sign-ups</span></li>
         <li><b>0</b><span>trackers</span></li>
       </ul>
@@ -241,12 +241,51 @@
       </button>
       </div>
     </section>
+    <section class="tool-group g-photo" aria-labelledby="grp-05">
+      <header class="group-head">
+        <span class="group-no">05</span>
+        <h2 id="grp-05">Photos</h2>
+        <p>Convert, shrink and clean up photos, or turn pages into pictures.</p>
+      </header>
+      <div class="tools-grid">
+      <button class="tool-card" data-tool="heic" style="--i:17">
+        <span class="card-no">17</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-mobile-screen-button"></i></span>
+        <span class="tool-card-text"><span class="card-title">HEIC to JPG</span><span class="card-desc">Open iPhone photos anywhere</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="convertimg" style="--i:18">
+        <span class="card-no">18</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-arrow-right-arrow-left"></i></span>
+        <span class="tool-card-text"><span class="card-title">Convert Image</span><span class="card-desc">Switch between JPG, PNG and WebP</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="resizeimg" style="--i:19">
+        <span class="card-no">19</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-down-left-and-up-right-to-center"></i></span>
+        <span class="tool-card-text"><span class="card-title">Resize &amp; Compress</span><span class="card-desc">Shrink photos for email and uploads</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="cleanimg" style="--i:20">
+        <span class="card-no">20</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>
+        <span class="tool-card-text"><span class="card-title">Remove Photo Details</span><span class="card-desc">Strip location and camera data</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      <button class="tool-card" data-tool="pdftoimages" style="--i:21">
+        <span class="card-no">21</span>
+        <span class="tool-card-icon" aria-hidden="true"><i class="fa-solid fa-file-image"></i></span>
+        <span class="tool-card-text"><span class="card-title">PDF to Images</span><span class="card-desc">Save pages as JPG or PNG</span></span>
+        <span class="card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right-long"></i></span>
+      </button>
+      </div>
+    </section>
   </div>
 
   <section class="privacy-strip" aria-label="Where your files go">
     <div class="privacy-col">
       <span class="privacy-icon" aria-hidden="true"><i class="fa-solid fa-laptop"></i></span>
-      <div><h3>Stays on your device</h3><p>Tools 01 to 12 run entirely in your browser. Your PDF is never sent anywhere, and it still works offline once the page has loaded.</p></div>
+      <div><h3>Stays on your device</h3><p>Tools 01 to 12 and every photo tool (17 to 21) run entirely in your browser. Your files are never sent anywhere, and they still work offline once the page has loaded.</p></div>
     </div>
     <div class="privacy-col">
       <span class="privacy-icon is-server" aria-hidden="true"><i class="fa-solid fa-server"></i></span>
@@ -286,6 +325,12 @@
       <button class="tool-btn tool-btn-server" data-panel="pdftoword"><i class="fa-solid fa-file-word"></i><span>→ Word</span></button>
       <button class="tool-btn tool-btn-server" data-panel="pdftoexcel"><i class="fa-solid fa-file-excel"></i><span>→ Excel</span></button>
       <button class="tool-btn tool-btn-server" data-panel="pdftopptx"><i class="fa-solid fa-file-powerpoint"></i><span>→ PPTX</span></button>
+      <div class="sidebar-divider"></div>
+      <button class="tool-btn" data-panel="heic"><i class="fa-solid fa-mobile-screen-button"></i><span>HEIC</span></button>
+      <button class="tool-btn" data-panel="convertimg"><i class="fa-solid fa-arrow-right-arrow-left"></i><span>Convert</span></button>
+      <button class="tool-btn" data-panel="resizeimg"><i class="fa-solid fa-down-left-and-up-right-to-center"></i><span>Resize</span></button>
+      <button class="tool-btn" data-panel="cleanimg"><i class="fa-solid fa-user-shield"></i><span>Clean</span></button>
+      <button class="tool-btn" data-panel="pdftoimages"><i class="fa-solid fa-file-image"></i><span>→ Images</span></button>
     </nav>
   </aside>
 
@@ -401,12 +446,12 @@
     <!-- ── IMAGES TO PDF ── -->
     <div id="panel-imagestopdf" class="panel">
       <h2 class="panel-title"><i class="fa-solid fa-images"></i> Images to PDF</h2>
-      <p class="panel-desc">Add JPG/PNG images. Drag to reorder them, then convert.</p>
+      <p class="panel-desc">Add photos, including HEIC from an iPhone. Drag to reorder them, then convert.</p>
 
       <div class="tool-upload-zone" id="imgToPdfUploadZone">
         <i class="fa-solid fa-images"></i>
-        <p>Drop images here (JPG, PNG)</p>
-        <input type="file" id="imgToPdfInput" accept="image/jpeg,image/png" multiple hidden/>
+        <p>Drop images here (JPG, PNG, HEIC, WebP)</p>
+        <input type="file" id="imgToPdfInput" accept="image/*,.heic,.heif" multiple hidden/>
         <button class="btn-primary" onclick="document.getElementById('imgToPdfInput').click()">
           <i class="fa-solid fa-plus"></i> Add Images
         </button>
@@ -915,12 +960,72 @@
       <div id="pdftopptxStatus" class="convert-status hidden"></div>
     </div>
 
+    <!-- ── PHOTO TOOLS (built by js/photo.js) ── -->
+    <div id="panel-heic" class="panel photo-panel"></div>
+    <div id="panel-convertimg" class="panel photo-panel"></div>
+    <div id="panel-resizeimg" class="panel photo-panel"></div>
+    <div id="panel-cleanimg" class="panel photo-panel"></div>
+
+    <!-- ── PDF TO IMAGES ── -->
+    <div id="panel-pdftoimages" class="panel">
+      <h2 class="panel-title"><i class="fa-solid fa-file-image"></i> PDF to Images</h2>
+      <p class="panel-desc">Save pages as pictures. One page downloads as an image; several arrive together in a ZIP.</p>
+
+      <div class="tool-upload-zone" id="pdfImgUploadZone">
+        <i class="fa-solid fa-file-arrow-up"></i>
+        <p>Drop your PDF here or click to upload</p>
+        <input type="file" id="pdfImgFileInput" accept="application/pdf" hidden/>
+        <button class="btn-primary" onclick="document.getElementById('pdfImgFileInput').click()">
+          <i class="fa-solid fa-upload"></i> Choose PDF
+        </button>
+      </div>
+      <div id="pdfImgFileInfo" class="tool-file-info hidden"></div>
+
+      <div id="pdfImgControls" class="tool-controls hidden">
+        <div class="form-row">
+          <div class="form-group"><label for="pdfImgFormat">Save as</label>
+            <select id="pdfImgFormat" class="input">
+              <option value="png">PNG (sharpest)</option>
+              <option value="jpeg">JPG (smaller)</option>
+            </select>
+          </div>
+          <div class="form-group"><label for="pdfImgDpi">Resolution</label>
+            <select id="pdfImgDpi" class="input">
+              <option value="72">72 DPI · screen</option>
+              <option value="150" selected>150 DPI · standard</option>
+              <option value="300">300 DPI · print</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" id="pdfImgQualityWrap">
+          <label for="pdfImgQuality">Quality: <span id="pdfImgQualityVal">90%</span></label>
+          <input type="range" id="pdfImgQuality" min="40" max="100" value="90" class="range-input full"/>
+        </div>
+        <div class="form-group"><label for="pdfImgPages">Pages</label>
+          <select id="pdfImgPages" class="input">
+            <option value="all">All pages</option>
+            <option value="current">Page shown in the preview</option>
+            <option value="range">A range of pages</option>
+          </select>
+        </div>
+        <div class="form-row hidden" id="pdfImgRange">
+          <div class="form-group"><label for="pdfImgFrom">From page</label><input type="number" id="pdfImgFrom" min="1" value="1" class="input"/></div>
+          <div class="form-group"><label for="pdfImgTo">To page</label><input type="number" id="pdfImgTo" min="1" value="1" class="input"/></div>
+        </div>
+        <p id="pdfImgHint" class="hint"></p>
+        <button id="pdfImgBtn" class="btn-action" disabled>
+          <i class="fa-solid fa-file-image"></i> Save Pages &amp; Download
+        </button>
+      </div>
+    </div>
+
   </section><!-- /panel-area -->
 
   <!-- PREVIEW -->
   <section class="preview-area">
     <div class="preview-header">
       <span class="preview-label">Preview</span>
+      <span class="preview-label photo-label" id="photoCount">Photos</span>
       <div class="preview-nav">
         <button id="prevPage" class="icon-btn" disabled aria-label="Previous page" title="Previous page (Page Up)"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
         <span id="pageIndicator" aria-live="polite">– / –</span>
@@ -945,6 +1050,11 @@
       <div id="redactLayer" class="redact-layer"></div>
       <div id="sigPlacementLayer" class="sig-placement-layer"></div>
       <div id="imgPlacementLayer" class="sig-placement-layer img-placement-layer"></div>
+      <div id="photoEmpty" class="preview-placeholder photo-empty">
+        <i class="fa-solid fa-images"></i>
+        <p>Your photos will appear here</p>
+      </div>
+      <ul id="photoGallery" class="photo-gallery" aria-label="Photos"></ul>
     </div>
     <div class="preview-footer" id="previewFooter">
       <button id="downloadBtn" class="download-btn" disabled title="Download (Ctrl+S)">
@@ -957,6 +1067,7 @@
 </div><!-- /editorScreen -->
 
 <script src="js/core.js" defer></script>
+<script src="js/imagekit.js" defer></script>
 <script src="js/assemble.js" defer></script>
 <script src="js/annotate.js" defer></script>
 <script src="js/text.js" defer></script>
@@ -966,6 +1077,8 @@
 <script src="js/signature.js" defer></script>
 <script src="js/image.js" defer></script>
 <script src="js/server.js" defer></script>
+<script src="js/photo.js" defer></script>
+<script src="js/pdftoimages.js" defer></script>
 <script src="js/init.js" defer></script>
 </body>
 </html>
